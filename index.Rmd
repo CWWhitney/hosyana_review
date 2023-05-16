@@ -1,0 +1,37 @@
+---
+title: "Review of methods for supporting decisions under uncertainty"
+author: "Cory Whitney, ... Eike Luedeling"
+bibliography: 
+  - bib/01_introduction.bib
+  - bib/01_1_review_synthesis.bib
+output: 
+  bookdown::html_document2: 
+    keep_md: true
+---
+```{r child="01_Introduction.Rmd"}
+```
+
+```{r child = "01_1_Review_and_Synthesis.rmd"}
+```
+
+```{r child="02_Decision_Making_Processes.Rmd"}
+```
+
+```{r child = "03_Decision_Analysis.Rmd"}
+```
+
+```{r child = "04_Holistic_Approaches_in_Decision_Support.Rmd"}
+```
+
+```{r child = "05_Overview_of_Decision_Support_Methods.rmd"}
+```
+
+```{r child = "06_Value_of_Information_Analysis.rmd"}
+```
+
+
+```{r child = "07_Conclusion.rmd"}
+```
+
+```{r child="References.Rmd"}
+```
