@@ -17,7 +17,5 @@ https://docs.google.com/spreadsheets/d/1Wz31b_jCWY_bAhFaZoCsERhvjUNxoH9npZ2MNhn0
 
 and the GitHub issue that outlines the search and load process https://github.com/CWWhitney/hosyana_review/issues/3
 
---- Big Vision ---
-
 
 
