@@ -18,4 +18,7 @@ See [searching by years sheet](https://docs.google.com/spreadsheets/d/1Wz31b_jCW
 and the [GitHub issue](https://github.com/CWWhitney/hosyana_review/issues/3) that outlines the scholar search and Zotero paper loading process 
 
 
+<img width="780" alt="Screenshot 2023-06-23 at 14 21 15" src="https://github.com/CWWhitney/hosyana_review/assets/19190662/8a33d9ec-2361-4942-935c-c6f9db947a09">
 
+
+https://docs.google.com/presentation/d/1TLnVV3VIgcoUeXoBwmzvjdg-08AEW0mhrmnCHfVXQwY/edit#slide=id.p
