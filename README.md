@@ -46,6 +46,7 @@ Tags with the relevant information about the paper including, but not limited to
 <img width="288" alt="Screenshot 2023-07-05 at 4 26 19 PM" src="https://github.com/CWWhitney/hosyana_review/assets/19190662/3b167c7a-de9c-4917-a97c-d8b61eb6d867">
 
 **7. Regroup and discuss next steps (here they are preliminarily):**  
+
 8. re-organize files and move to new relevant folders, i.e. remove binned items to own folder (bin), remove papers that share application, methods etc. to shared folders for beginning the synthesis
 
 9. Divide initial stage of synthesis into chapters (according to folders)
