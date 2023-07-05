@@ -26,10 +26,15 @@ https://docs.google.com/presentation/d/1TLnVV3VIgcoUeXoBwmzvjdg-08AEW0mhrmnCHfVX
 # Protocol
 
 1. Download Zotero connector for your web interface (i.e. chrome connector)
+
 2. Join the zotero collection 22_Methods-Review-decisions (super secret and only for hortibonn people, ask if you need a link)
+
 3. Google Scholar search with keywords -> “decision”+(“intervention”OR”policy”)+“uncertainty”+(“expert”OR”stakeholder”)+(“model“OR”monte carlo”OR”simulation”OR”Bayesian”OR”computer assisted”)+(“value of information”OR”information accuracy”)
+
 4. Upload information for each of the papers, for subsets of years into zotero - using zotero connector https://docs.google.com/spreadsheets/d/1Wz31b_jCWY_bAhFaZoCsERhvjUNxoH9npZ2MNhn0XD8/edit#gid=1791116862
+
 5. Add notes and tags - using information from the pdf or the link in snapshot (usually the abstract already has enough information)
+
 6. These notes and tags should outline either the reason for exclusion (a note proceeded by 'Bin:' i.e.
 
 <img width="329" alt="Screenshot 2023-07-05 at 4 27 19 PM" src="https://github.com/CWWhitney/hosyana_review/assets/19190662/744c6402-0e01-45be-a1a0-d01a97a1243e">
@@ -42,7 +47,10 @@ Tags with the relevant information about the paper including, but not limited to
 
 **7. Regroup and discuss next steps (here they are preliminarily):**  
 8. re-organize files and move to new relevant folders, i.e. remove binned items to own folder (bin), remove papers that share application, methods etc. to shared folders for beginning the synthesis
+
 9. Divide initial stage of synthesis into chapters (according to folders)
+
 10. Export bib files of each folder  and add to Github collection, reference in YAML of the `index` file
+
 11. Write synthesis 
 
