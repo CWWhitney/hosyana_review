@@ -9,6 +9,7 @@ output:
     keep_md: true
 ---
 
+
 # Introduction
 
 <!-- A. Background and significance of decision making under uncertainty -->
@@ -59,7 +60,7 @@ From Web of Science, 14 records were collected in May 2023, and from Google Scho
 
 ## Methodology extraction
 
-We use Keeney’s representation of where formal decision support is required and applied as motivation and framework for the assessmentKeeney’s judgment about how 10,000 decisions are typically made - his personal histogram of 10,000 decisions being faced by numerous decision makers \@ref(fig:01_keeney) [@keeneyMakingBetterDecision2004b].
+We use Keeney’s representation of where formal decision support is required and applied as motivation and framework for the assessment - Keeney’s judgment about how 10,000 decisions are typically made - his personal histogram of 10,000 decisions being faced by numerous decision makers \@ref(#fig:01_keeney) [@keeneyMakingBetterDecision2004b].
 
 ![(#fig:01_keeney) Keeney’s judgment about how 10,000 decisions are typically made - his personal histogram of 10,000 decisions being faced by numerous decision makers](figs/fig01_Keeney.png)
 
@@ -139,7 +140,6 @@ Model OR "monte carlo" OR simulation OR "computer assisted" +
 ## Concept and relevance of the value of information
 ## Application of the value of information analysis in decision making
 ## Assessing the impact of uncertainty reduction or information increase
-
 
 
 # 07_Conclusion

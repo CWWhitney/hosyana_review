@@ -8,6 +8,7 @@ output:
   bookdown::html_document2: 
     keep_md: true
 ---
+
 ```{r child="01_Introduction.Rmd"}
 ```
 
@@ -28,7 +29,6 @@ output:
 
 ```{r child = "06_Value_of_Information_Analysis.rmd"}
 ```
-
 
 ```{r child = "07_Conclusion.rmd"}
 ```
