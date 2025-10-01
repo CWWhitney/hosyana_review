@@ -1,5 +1,0 @@
-# 04 Holistic Approaches in Decision Support
-
-## Definition and characteristics of holistic approaches
-## Applications of holistic approaches in decision-making under uncertainty
-## Comparison with classical decision analysis methods
