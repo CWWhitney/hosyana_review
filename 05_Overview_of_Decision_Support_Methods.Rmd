@@ -1,5 +1,0 @@
-# 05 Overview of Decision Support Methods
-
-## Identification and classification of decision-supporting methods
-## Description and evaluation of selected methods
-## Applications of decision support methods in various domains
