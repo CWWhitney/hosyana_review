@@ -11,22 +11,21 @@ Protocol: We follow the PRISMA (Preferred Reporting Items for Systematic Reviews
 
 **Decision + Intervention OR policy + Uncertainty + Expert OR stakeholder + Model OR monte carlo OR simulation OR computer assisted + value of information OR information accuracy**
 
-“decision”+(“intervention”OR”policy”)+“uncertainty”+(“expert”OR”stakeholder”)+(“model“OR”monte carlo”OR”simulation”OR”Bayesian”OR”computer assisted”)+
-(“value of information”OR”information accuracy”)
+"decision"+("intervention"OR"policy")+"uncertainty"+("expert"OR"stakeholder")+("model"OR"monte carlo"OR"simulation"OR"Bayesian"OR"computer assisted")+
+("value of information"OR"information accuracy")
 
 From Web of Science, 14 records were collected in May 2023, and from Google Scholar, 17500+ records were collected in April and May 2023. Associated papers and articles from the search records were also gathered as secondary data collection. Some had shared arXiv or doi links, other parts of shared contributions and assorted affiliations that led to new papers. We applied specific inclusion criteria to this large set of records to reduce the number of records covered under this study. An independent screening of the collected records is performed to confirm their eligibility for the study.
 
 ### Inclusion criteria: 
 
 1. Record should be in the English language, 
-1. Scientific articles, reports and XXX are included,
+1. Scientific articles, reports and others are included,
 1. Must involve some form of decision-making or decision-supporting aspect,
 
 ### Reasons for exclusion
 
 - Annual reports, syllabus, catalogs of studies, unrelated legal documents, published bibliography collections, duplicates, course notes, preprints (where we already have the published journal article)
 - All non-scientific reports and case studies
-- ... 
 
 
 ## Methodology extraction
@@ -48,15 +47,11 @@ We preserved our search string on searchRxiv [@whitneyReviewMethodsSupporting202
 
 ‘Google Scholar advanced search’ is much less targeted (2.4 million hits): 
 with all of the words: decision intervention policy uncertainty model
-with at least one of the words: “value of information” ”information accuracy” 
-“intervention” ”policy”“model*“ 
-”monte carlo” ”simulation” ”Bayesian" “computer assisted” 
-”expert” ”stakeholder” 
-where my words occur ‘anywhere in the article’
+with at least one of the words: "value of information", "information accuracy", "intervention", "policy", "model*", "monte carlo" "simulation", "Bayesian", "computer assisted", "expert", "stakeholder", where my words occur ‘anywhere in the article’. 
 
 After importing papers to Zotero we: 
 
--	Run PDF search in Zotero to find about 20 missing PDFs. Manual PDF search for ~300. Look up web pages that report findings to find original publication, proceedings (20), papers (40), thesis (30)
+-	Ran a PDF search in Zotero to find missing PDFs. Manual PDF search for ~300. Look up web pages that report findings to find original publication, proceedings (20), papers (40), thesis (30)
 -	Remove lots of spurious things that turned up in the results: Annual reports (5+), syllabus / catalogs of studies (10+), unrelated legal documents (3+), published bibliography collections, duplicates (50+), course notes (2), preprints (where we already have the published journal article 5)
 -	Add papers to our collection that appear in the bibliography and syllabus that were not already in the search (40+). Google Scholar suggested these papers because of the citation to relevant work. 
 
@@ -66,10 +61,5 @@ Web of Science - 14 results
 
 CABI - 13 results
 
-Decision +
-Intervention OR policy +
-Uncertainty + 
-Expert OR stakeholder +
-Model OR "monte carlo" OR simulation OR "computer assisted" + 
-"value of information" OR "information accuracy"
+Decision + Intervention OR policy + Uncertainty + Expert OR stakeholder + Model OR "monte carlo" OR simulation OR "computer assisted" + "value of information" OR "information accuracy"
 
