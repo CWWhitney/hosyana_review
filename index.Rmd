@@ -1,13 +1,111 @@
 ---
-title: "Review of methods for supporting decisions under uncertainty"
-author: "Cory Whitney, ... Eike Luedeling"
+title: "Methods for Supporting Decisions under Deep Uncertainty: A Systematic Bibliometric Review"
+subtitle: "Analysis of 15,000+ Publications on Decision Support Methodologies"
+author:
+  - name: "Cory Whitney"
+    affiliation: "University of Bonn, Germany"
+    email: "cory.whitney@uni-bonn.de"
+  - name: "Eike Luedeling" 
+    affiliation: "University of Bonn, Germany"
+    email: "eike.luedeling@uni-bonn.de"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+abstract: |
+  **Background:** Decision-making under deep uncertainty requires robust methodological approaches that can handle incomplete information and multiple stakeholder perspectives. This review systematically maps the methodological landscape across 15,000+ publications.
+  
+  **Methods:** We employ automated text mining, keyword classification, and bibliometric analysis to categorize methods, applications, and trends in decision support under uncertainty.
+  
+  **Keywords:** decision support, deep uncertainty, value of information, Bayesian analysis, stochastic optimization, multi-criteria decision analysis, systematic review, bibliometrics
 bibliography: 
   - bib/01_introduction.bib
   - bib/01_1_review_synthesis.bib
+csl: apa.csl
+link-citations: true
 output: 
-  bookdown::html_document2: 
+  bookdown::html_document2:
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    number_sections: true
+    theme: 
+      version: 4
+      bootswatch: cosmo
+    highlight: pygments
+    code_folding: hide
+    code_download: true
+    fig_width: 10
+    fig_height: 6
+    fig_caption: true
     keep_md: true
+    df_print: paged
 ---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+
+# Global knitr options
+knitr::opts_chunk$set(
+  echo = TRUE,           # Show code in output
+  eval = TRUE,           # Evaluate code chunks
+  include = TRUE,        # Include chunk output
+  message = FALSE,       # Suppress package messages
+  warning = FALSE,       # Suppress warnings
+  error = FALSE,         # Continue on errors (set to TRUE for debugging)
+  cache = TRUE,          # Cache results for faster knitting
+  cache.lazy = FALSE,    # Eager caching for large datasets
+  fig.width = 10,        # Figure width in inches
+  fig.height = 6,        # Figure height in inches
+  fig.align = "center",  # Figure alignment
+  fig.pos = "H",         # Figure position
+  out.width = "90%",     # Output width
+  fig.cap = TRUE,        # Enable figure captions
+  dev = "png",           # Graphics device
+  dpi = 300,             # Figure resolution
+  tidy = FALSE,          # Don't tidy code (preserve formatting)
+  results = "markup"     # How to display results
+)
+
+
+# Load required packages quietly
+suppressPackageStartupMessages({
+  library(bib2df)        # BibTeX file processing
+  library(dplyr)         # Data manipulation
+  library(tidyr)         # Data tidying
+  library(stringr)       # String operations
+  library(purrr)         # Functional programming
+  library(ggplot2)       # Data visualization
+  library(scales)        # Plot scales
+  library(kableExtra)    # Enhanced tables
+  library(DT)            # Interactive tables
+  library(ggthemes)      # Additional ggplot themes
+})
+
+# Set ggplot theme for consistent styling
+theme_set(theme_minimal(base_size = 12, base_family = "sans"))
+theme_update(
+  plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+  plot.subtitle = element_text(face = "italic", size = 12, hjust = 0.5),
+  axis.title = element_text(face = "bold", size = 12),
+  legend.title = element_text(face = "bold"),
+  panel.grid.minor = element_blank(),
+  plot.caption = element_text(face = "italic", size = 10)
+)
+
+# Custom color palette for methods
+method_colors <- c(
+  bayesian = "#1f77b4",
+  simulation = "#ff7f0e", 
+  optimization = "#2ca02c",
+  statistical = "#d62728",
+  decision_analysis = "#9467bd",
+  machine_learning = "#8c564b",
+  multi_criteria = "#e377c2",
+  economic_evaluation = "#7f7f7f",
+  risk_analysis = "#bcbd22",
+  forecasting = "#17becf"
+)
+
+```
 
 ```{r child="01_Introduction.Rmd"}
 ```
@@ -15,22 +113,185 @@ output:
 ```{r child = "01_1_Review_and_Synthesis.rmd"}
 ```
 
-```{r child="02_Decision_Making_Processes.Rmd"}
+```{r clean_bib_data}
+
+# Read the bib file
+bib_data <- bib2df("bib/23_Methods_Review_Holistic_Systems.bib")
+
+# Basic cleaning and text preparation
+clean_bib_data <- bib_data %>%
+  mutate(
+    has_annotation = !is.na(ANNOTE) & ANNOTE != "",
+    annotation_text = ifelse(has_annotation, ANNOTE, ""),
+    full_text = paste(TITLE, ANNOTE, sep = " "),
+    year = as.numeric(YEAR)
+  )
+
 ```
 
-```{r child = "03_Decision_Analysis.Rmd"}
+```{r method_categories}
+# method categories
+method_categories <- list(
+  bayesian = c("bayesian", "bayes", "mcmc", "markov chain", "prior", "posterior"),
+  simulation = c("simulation", "monte carlo", "stochastic", "agent-based", "discrete event"),
+  optimization = c("optimization", "linear programming", "nonlinear programming", "heuristic"),
+  statistical = c("regression", "anova", "time series", "survival analysis", "mixed model"),
+  decision_analysis = c("decision analysis", "decision tree", "markov model", "value of information", "voi"),
+  machine_learning = c("machine learning", "neural network", "random forest", "svm", "clustering"),
+  multi_criteria = c("multi-criteria", "multi criteria", "analytic hierarchy", "ahp", "topsis"),
+  economic_evaluation = c("cost-effectiveness", "cost-benefit", "cost-utility", "economic evaluation"),
+  risk_analysis = c("risk analysis", "risk assessment", "sensitivity analysis", "uncertainty analysis")
+)
 ```
 
-```{r child = "04_Holistic_Approaches_in_Decision_Support.Rmd"}
+```{r detect_methods}
+
+source("R/detect_methods_enhanced.R")
+# Apply method detection
+clean_bib_data <- clean_bib_data %>%
+  mutate(
+    detected_methods = map_chr(full_text, detect_methods_enhanced),
+    
+    # Also detect from title only for confidence scoring
+    methods_from_title = map_chr(TITLE, detect_methods_enhanced)
+  )
+
 ```
 
-```{r child = "05_Overview_of_Decision_Support_Methods.rmd"}
+```{r add_confidence_scores}
+
+source("R/add_confidence_scores.R")
+# Apply confidence scoring
+clean_bib_data <- add_confidence_scores(clean_bib_data)
+
 ```
 
-```{r child = "06_Value_of_Information_Analysis.rmd"}
+```{r method_detection_check}
+# Quick check of what we detected
+cat("=== METHOD DETECTION SUMMARY ===\n")
+cat("Total papers:", nrow(clean_bib_data), "\n")
+cat("Papers with methods detected:", sum(clean_bib_data$detected_methods != ""), "\n")
+cat("Papers with VOI:", sum(clean_bib_data$has_voi), "\n")
+cat("Confidence distribution:\n")
+print(table(clean_bib_data$method_confidence))
+
 ```
 
-```{r child = "07_Conclusion.rmd"}
+```{r sample_results}
+
+# Show some examples
+cat("\n=== SAMPLE OF DETECTED METHODS ===\n")
+sample_results <- clean_bib_data %>%
+  filter(detected_methods != "") %>%
+  select(TITLE, detected_methods, method_confidence) %>%
+  head(10)
+
+print(sample_results)
+```
+
+```{r method_results_plot}
+source("R/analyze_method_frequency.R")
+
+
+method_results <- analyze_method_frequency(clean_bib_data)
+print(method_results$plot)
+print(method_results$counts)
+```
+
+
+```{r voi_results}
+source("R/analyze_voi_papers.R")
+# Analyze VOI papers
+voi_results <- analyze_voi_papers(clean_bib_data)
+
+```
+
+```{r results_table}
+# Create a comprehensive results table
+results_table <- clean_bib_data %>%
+  select(
+    TITLE, 
+    YEAR = year,
+    HAS_ANNOTATION = has_annotation,
+    DETECTED_METHODS = detected_methods, 
+    CONFIDENCE = method_confidence,
+    VOI = has_voi,
+    BAYESIAN = has_bayesian,
+    SIMULATION = has_simulation,
+    UNCERTAINTY = has_uncertainty
+  )
+
+# Export for manual verification
+write.csv(results_table, "data/method_detection_results.csv", row.names = FALSE)
+
+```
+
+```{r summary_report}
+
+# Create summary report
+cat("\n=== EXPORT SUMMARY ===\n")
+cat("Results exported to: method_detection_results.csv\n")
+cat("Total papers processed:", nrow(clean_bib_data), "\n")
+cat("Papers with methods:", sum(clean_bib_data$detected_methods != ""), "\n")
+cat("High confidence classifications:", sum(clean_bib_data$method_confidence == "high"), "\n")
+
+```
+
+```{r top_methods}
+
+# Show top methods
+top_methods <- clean_bib_data %>%
+  filter(detected_methods != "") %>%
+  separate_rows(detected_methods, sep = "; ") %>%
+  count(detected_methods, sort = TRUE) %>%
+  head(10)
+
+cat("\nTop 10 methods detected:\n")
+print(top_methods)
+```
+
+```{r validation_check}
+# Quick validation - check if our detection makes sense
+validation_check <- clean_bib_data %>%
+  filter(has_voi) %>%
+  select(TITLE, detected_methods, method_confidence) %>%
+  arrange(desc(method_confidence))
+
+cat("\n=== VALIDATION CHECK - VOI PAPERS ===\n")
+print(validation_check)
+```
+
+
+```{r high_confidence}
+
+# Check papers with high confidence
+high_confidence <- clean_bib_data %>%
+  filter(method_confidence == "high") %>%
+  select(TITLE, detected_methods, methods_from_title)
+
+cat("\n=== HIGH CONFIDENCE CLASSIFICATIONS ===\n")
+print(high_confidence)
+```
+
+```{r datatable_clean_bib_data}
+# Minimal interactive table
+DT::datatable(
+  clean_bib_data %>%
+    select(
+      Author = AUTHOR,
+      Year = YEAR,
+      Title = TITLE
+    ) %>%
+    arrange(desc(Year), Author),
+  options = list(
+    pageLength = 5,
+    lengthMenu = c(5, 10, 20),
+    dom = 'tip'  # table, info, pagination only
+  ),
+  caption = "Reference List",
+  rownames = FALSE,
+  filter = "none"  # remove filter to save space
+)
 ```
 
 ```{r child="References.Rmd"}
