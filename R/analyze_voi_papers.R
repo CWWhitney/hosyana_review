@@ -7,8 +7,7 @@ analyze_voi_papers <- function(data) {
     return(NULL)
   }
   
-  cat("=== VOI PAPERS ANALYSIS ===\n")
-  cat("Number of VOI papers:", nrow(voi_papers), "\n")
+  
   
   # Methods used in VOI papers
   voi_methods <- voi_papers %>%
@@ -16,7 +15,7 @@ analyze_voi_papers <- function(data) {
     separate_rows(detected_methods, sep = "; ") %>%
     count(detected_methods, sort = TRUE)
   
-  cat("\nMethods used in VOI papers:\n")
+  
   print(voi_methods)
   
   # Temporal trends of VOI
