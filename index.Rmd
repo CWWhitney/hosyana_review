@@ -346,10 +346,21 @@ The `method_results` reveal dominant methodological paradigms and identifies les
 
 We conduct specialized analysis of Value of Information (VOI) literature, examining methodological patterns and temporal trends. 
 
-```{r voi_results}
+```{r voi_results_assess}
 source("R/analyze_voi_papers.R")
 # Analyze VOI papers
 voi_results <- analyze_voi_papers(clean_bib_data)
+
+# Access results
+voi_results$summary
+```
+```{r voi_results_methods}
+knitr::kable(voi_results$methods, caption = "Methods in VOI Papers")
+
+```
+
+```{r voi_results_plot}
+voi_results$plot
 ```
 
 `analyze_voi_papers` shows the methodological evolution and application contexts specific to VOI.
@@ -379,7 +390,7 @@ write.csv(results_table, "data/method_detection_results.csv", row.names = FALSE)
 
 ## Analysis Summary
 
-We provide a comprehensive summary of the automated classification pipeline performance and output metrics. The summary quantifies analysis scope and classification reliability.
+We provide a summary of the papers with `summarise` from [@R-dplyr]. 
 
 ```{r summary_report}
 # Create summary report
@@ -395,7 +406,7 @@ knitr::kable(summary_stats, caption = "Analysis Summary")
 
 ## Dominant Methodological Approaches
 
-We identify the most prevalent methodological approaches using frequency analysis and `tidyr` [@R-tidyr] for data restructuring.
+We identify prevalent methodological approaches using frequency analysis and `tidyr` [@R-tidyr] for data restructuring.
 
 ```{r top_methods}
 # Show top methods
