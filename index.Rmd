@@ -1,41 +1,17 @@
 ---
-title: "Methods for Supporting Decisions under Deep Uncertainty: A Systematic Bibliometric Review"
-subtitle: "Analysis of 15,000+ Publications on Decision Support Methodologies"
-author:
-  - name: "Cory Whitney"
-    affiliation: "University of Bonn, Germany"
-    email: "cory.whitney@uni-bonn.de"
+title: "Methods for Supporting Decisions under Uncertainty"
+author: "Cory Whitney"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
-abstract: |
-  **Background:** Decision-making under deep uncertainty requires robust methodological approaches that can handle incomplete information and multiple stakeholder perspectives. This review systematically maps the methodological landscape across 15,000+ publications.
-  
-  **Methods:** We employ automated text mining, keyword classification, and bibliometric analysis to categorize methods, applications, and trends in decision support under uncertainty.
-  
-  **Keywords:** decision support, deep uncertainty, value of information, Bayesian analysis, stochastic optimization, multi-criteria decision analysis, systematic review, bibliometrics
 bibliography: 
   - bib/01_introduction.bib
   - bib/01_1_review_synthesis.bib
   - bib/packages.bib
-csl: apa.csl
-link-citations: true
 output: 
-  bookdown::html_document2:
+  html_document:
     toc: true
     toc_depth: 3
-    toc_float:
-      collapsed: true
-      smooth_scroll: true
-    number_sections: true
-    theme: 
-      version: 4
-      bootswatch: flatly
+    theme: flatly
     highlight: textmate
-    code_folding: show
-    code_download: false
-    fig_width: 10
-    fig_height: 6
-    fig_caption: true
-    keep_md: true
     df_print: kable
 ---
 
