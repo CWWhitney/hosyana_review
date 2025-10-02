@@ -5,9 +5,6 @@ author:
   - name: "Cory Whitney"
     affiliation: "University of Bonn, Germany"
     email: "cory.whitney@uni-bonn.de"
-  - name: "Eike Luedeling" 
-    affiliation: "University of Bonn, Germany"
-    email: "eike.luedeling@uni-bonn.de"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 abstract: |
   **Background:** Decision-making under deep uncertainty requires robust methodological approaches that can handle incomplete information and multiple stakeholder perspectives. This review systematically maps the methodological landscape across 15,000+ publications.
