@@ -123,14 +123,18 @@ method_colors <- c(
 
 ## Reading Bibliographic Data
 
+We import bibliographic records using the `bib2df` package [@R-bib2df], converting our BibTeX file into a structured data frame for systematic processing.
+
 ```{r read_data, echo=TRUE}
 # Read the bib file
 bib_data <- bib2df::bib2df("bib/23_Methods_Review_Holistic_Systems.bib")
 ```
 
-**Rationale:** We import bibliographic records using the `bib2df` package [@R-bib2df], which converts BibTeX files into structured data frames. This enables systematic processing of large literature collections (n = `r nrow(bib_data)`) while preserving metadata integrity.
+Our BibTeX contains (n = `r nrow(bib_data)`) citations.
 
 ## Data Cleaning and Feature Engineering
+
+We prepare the data using `dplyr` [@R-dplyr], for annotation tracking and text consolidation.
 
 ```{r clean_data, echo=TRUE}
 # Basic cleaning and text preparation
@@ -143,13 +147,107 @@ clean_bib_data <- bib_data %>%
   )
 ```
 
-**Methodology:** Using `dplyr` [@R-dplyr], we create analysis-ready features:
+(`r sum(clean_bib_data$has_annotation)` of the citations have annotations.
 
-- **Annotation tracking**: Identify `r sum(clean_bib_data$has_annotation)` annotated papers for validation
-- **Text consolidation**: Combine titles and annotations for method detection
-- **Temporal normalization**: Convert publication years for trend analysis
+## Method Term Discovery
 
-This preprocessing ensures consistent data structure for automated classification of methodological approaches.
+We search the bibliographic record for methodological terms from titles, abstracts, keywords, and annotations.
+
+```{r method_discovery_comprehensive, echo=TRUE}
+library(tidytext)
+
+# Combine all text fields for comprehensive analysis
+all_text_data <- clean_bib_data %>%
+  mutate(
+    combined_text = paste(
+      TITLE, 
+      ifelse(!is.na(ABSTRACT), ABSTRACT, ""),
+      ifelse(!is.na(KEYWORDS), KEYWORDS, ""),
+      ifelse(!is.na(ANNOTE), ANNOTE, ""),
+      sep = " "
+    )
+  )
+
+# Tokenize all text fields to discover method terms
+method_terms_comprehensive <- all_text_data %>%
+  select(combined_text) %>%
+  unnest_tokens(word, combined_text) %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 5, nchar(word) > 3) %>%  # Filter for meaningful terms
+  anti_join(stop_words)  # Remove common stop words
+```
+
+```{r display_method_terms, echo=FALSE}
+knitr::kable(
+  method_terms_comprehensive %>% head(30),
+  caption = "Top 30 Most Frequent Terms Across All Text Fields",
+  col.names = c("Term", "Frequency")
+)
+```
+
+```{r bigram_analysis, echo=TRUE}
+# Analyze multi-word method terms using n-grams
+method_bigrams_comprehensive <- all_text_data %>%
+  select(combined_text) %>%
+  unnest_tokens(bigram, combined_text, token = "ngrams", n = 2) %>%
+  count(bigram, sort = TRUE) %>%
+  filter(n > 2)  # Keep only terms appearing multiple times
+```
+
+```{r display_bigrams, echo=FALSE}
+knitr::kable(
+  method_bigrams_comprehensive %>% head(20),
+  caption = "Top 20 Most Frequent Bigrams (Two-Word Terms)",
+  col.names = c("Bigram", "Frequency")
+)
+```
+
+```{r method_pattern_analysis, echo=TRUE}
+# Use pattern matching to find potential method terms in context
+method_patterns <- c(
+  "analysis", "model", "method", "approach", "framework", 
+  "technique", "algorithm", "estimation", "evaluation", "simulation",
+  "optimization", "bayesian", "statistical", "stochastic"
+)
+
+# Extract sentences containing methodological terms
+method_sentences <- all_text_data %>%
+  select(combined_text) %>%
+  unnest_tokens(sentence, combined_text, token = "sentences") %>%
+  filter(str_detect(tolower(sentence), paste(method_patterns, collapse = "|"))) %>%
+  sample_n(10)  # Sample for review
+```
+
+## Sample Sentences Containing Methodological Terms
+
+```{r display_method_context, echo=FALSE}
+knitr::kable(
+  data.frame(Example_Sentences = method_sentences$sentence)
+)
+```
+
+```{r keyword_analysis, echo=TRUE}
+# Specifically analyze author-provided keywords
+if("KEYWORDS" %in% names(clean_bib_data)) {
+  keyword_analysis <- clean_bib_data %>%
+    filter(!is.na(KEYWORDS)) %>%
+    select(KEYWORDS) %>%
+    unnest_tokens(keyword, KEYWORDS, token = "regex", pattern = ";|,") %>%
+    mutate(keyword = str_trim(tolower(keyword))) %>%
+    count(keyword, sort = TRUE) %>%
+    filter(n > 1, nchar(keyword) > 2)
+}
+```
+
+```{r display_keywords, echo=FALSE}
+if(exists("keyword_analysis")) {
+  knitr::kable(
+    keyword_analysis %>% head(20),
+    caption = "Top 20 Author-Provided Keywords",
+    col.names = c("Keyword", "Frequency")
+  )
+}
+```
 
 ```{r method_categories}
 # method categories
@@ -168,6 +266,8 @@ method_categories <- list(
 
 ## Automated Method Detection
 
+We apply automated classification using a custom dictionary-based algorithm (`detect_methods_enhanced.R`) that identifies methodological approaches from text content. The `purrr` package [@R-purrr] enables efficient vectorized processing across all records. Our dual detection (full text and titles only) enables confidence scoring, where methods appearing in titles receive higher reliability weights for subsequent analysis.
+
 ```{r detect_methods}
 source("R/detect_methods_enhanced.R")
 # Apply method detection
@@ -178,11 +278,9 @@ clean_bib_data <- clean_bib_data %>%
   )
 ```
 
-**Method:** We apply automated classification using a custom dictionary-based algorithm (`detect_methods_enhanced.R`) that identifies methodological approaches from text content. The `purrr` package [@R-purrr] enables efficient vectorized processing across all records.
-
-**Purpose:** Dual detection (full text and titles only) enables confidence scoring, where methods appearing in titles receive higher reliability weights for subsequent analysis.
-
 ## Confidence Scoring
+
+We assign confidence levels to method classifications based on detection location. Methods identified in titles receive higher confidence than those found only in annotations, enabling quality-weighted analysis.
 
 ```{r add_confidence_scores}
 source("R/add_confidence_scores.R")
@@ -190,31 +288,38 @@ source("R/add_confidence_scores.R")
 clean_bib_data <- add_confidence_scores(clean_bib_data)
 ```
 
-**Method:** We assign confidence levels to method classifications based on detection location. Methods identified in titles receive higher confidence than those found only in annotations, enabling quality-weighted analysis.
-
-**Purpose:** Confidence scoring prioritizes reliable classifications for key findings while maintaining comprehensive coverage, balancing precision and recall in automated text analysis.
-
 ## Method Detection Validation
 
-```{r method_detection_check}
-# Quick check of what we detected
-cat("=== METHOD DETECTION SUMMARY ===\n")
-cat("Total papers:", nrow(clean_bib_data), "\n")
-cat("Papers with methods detected:", sum(clean_bib_data$detected_methods != ""), "\n")
-cat("Papers with VOI:", sum(clean_bib_data$has_voi), "\n")
-cat("Confidence distribution:\n")
-print(table(clean_bib_data$method_confidence))
+We validate the automated classification by reporting key metrics including detection rates and confidence level distribution. 
+
+```{r method_detection_check_clean, echo=FALSE}
+# Create a clean summary table
+detection_summary <- data.frame(
+  Metric = c("Total papers", 
+             "Papers with methods detected", 
+             "Papers with VOI",
+             "High confidence classifications",
+             "Medium confidence classifications",
+             "Low confidence classifications"),
+  Count = c(nrow(clean_bib_data),
+            sum(clean_bib_data$detected_methods != ""),
+            sum(clean_bib_data$has_voi),
+            sum(clean_bib_data$method_confidence == "high"),
+            sum(clean_bib_data$method_confidence == "medium"), 
+            sum(clean_bib_data$method_confidence == "low"))
+)
+
+knitr::kable(detection_summary, 
+             caption = "Method Detection Summary Statistics",
+             col.names = c("Metric", "Count"))
 ```
-
-**Quality Control:** We validate the automated classification by reporting key metrics including detection rates and confidence level distribution.
-
-**Purpose:** This summary ensures methodological transparency and provides immediate insight into classification performance before detailed analysis.
 
 ## Classification Examples
 
+We display representative examples of automated method classifications to illustrate detection accuracy and confidence assignment. 
+
 ```{r sample_results}
 # Show some examples
-cat("\n=== SAMPLE OF DETECTED METHODS ===\n")
 sample_results <- clean_bib_data %>%
   filter(detected_methods != "") %>%
   select(TITLE, detected_methods, method_confidence) %>%
@@ -223,11 +328,9 @@ sample_results <- clean_bib_data %>%
 print(sample_results)
 ```
 
-**Validation:** We display representative examples of automated method classifications to illustrate detection accuracy and confidence assignment.
-
-**Purpose:** Sample inspection provides face validity assessment and helps identify potential classification patterns or issues before full-scale analysis.
-
 ## Method Frequency Analysis
+
+We quantify and visualize the distribution of methodological approaches across the literature using frequency analysis and bar chart visualization via `ggplot2` [@R-ggplot2].
 
 ```{r method_results_plot}
 source("R/analyze_method_frequency.R")
@@ -237,11 +340,11 @@ print(method_results$plot)
 print(method_results$counts)
 ```
 
-**Analysis:** We quantify and visualize the distribution of methodological approaches across the literature using frequency analysis and bar chart visualization via `ggplot2` [@R-ggplot2].
-
-**Purpose:** This reveals dominant methodological paradigms and identifies less common approaches, providing the foundational landscape for understanding methodological preferences in decision support under uncertainty.
+The `method_results` reveal dominant methodological paradigms and identifies less common approaches.
 
 ## Value of Information Analysis
+
+We conduct specialized analysis of Value of Information (VOI) literature, examining methodological patterns and temporal trends. 
 
 ```{r voi_results}
 source("R/analyze_voi_papers.R")
@@ -249,11 +352,11 @@ source("R/analyze_voi_papers.R")
 voi_results <- analyze_voi_papers(clean_bib_data)
 ```
 
-**Focus:** We conduct specialized analysis of Value of Information (VOI) literature, examining methodological patterns and temporal trends within this key decision-support approach.
-
-**Purpose:** This targeted analysis identifies methodological evolution and application contexts specific to VOI, informing recommendations for methodological integration in uncertainty-aware decision frameworks.
+`analyze_voi_papers` shows the methodological evolution and application contexts specific to VOI.
 
 ## Results Export
+
+We compile all classification results into a structured `results_table` and export for external validation and secondary analysis.
 
 ```{r results_table}
 # Create a comprehensive results table
@@ -274,26 +377,25 @@ results_table <- clean_bib_data %>%
 write.csv(results_table, "data/method_detection_results.csv", row.names = FALSE)
 ```
 
-**Documentation:** We compile all classification results into a structured table and export for external validation and secondary analysis.
-
-**Purpose:** This ensures full reproducibility, enables manual verification of automated classifications, and provides a foundation for future methodological studies using this annotated dataset.
-
 ## Analysis Summary
+
+We provide a comprehensive summary of the automated classification pipeline performance and output metrics. The summary quantifies analysis scope and classification reliability.
 
 ```{r summary_report}
 # Create summary report
-cat("\n=== EXPORT SUMMARY ===\n")
-cat("Results exported to: method_detection_results.csv\n")
-cat("Total papers processed:", nrow(clean_bib_data), "\n")
-cat("Papers with methods:", sum(clean_bib_data$detected_methods != ""), "\n")
-cat("High confidence classifications:", sum(clean_bib_data$method_confidence == "high"), "\n")
+summary_stats <- clean_bib_data %>%
+  summarise(
+    total_papers = n(),
+    papers_with_methods = sum(detected_methods != ""),
+    high_confidence = sum(method_confidence == "high")
+  )
+
+knitr::kable(summary_stats, caption = "Analysis Summary")
 ```
 
-**Synthesis:** We provide a comprehensive summary of the automated classification pipeline performance and output metrics.
-
-**Purpose:** This final summary quantifies analysis scope and classification reliability, establishing the foundation for subsequent methodological interpretation and research recommendations.
-
 ## Dominant Methodological Approaches
+
+We identify the most prevalent methodological approaches using frequency analysis and `tidyr` [@R-tidyr] for data restructuring.
 
 ```{r top_methods}
 # Show top methods
@@ -303,15 +405,14 @@ top_methods <- clean_bib_data %>%
   count(detected_methods, sort = TRUE) %>%
   head(10)
 
-cat("\nTop 10 methods detected:\n")
 print(top_methods)
 ```
 
-**Findings:** We identify the most prevalent methodological approaches using frequency analysis and `tidyr` [@R-tidyr] for data restructuring.
-
-**Purpose:** This reveals the methodological ecosystem's core components, highlighting established practices and potential gaps in decision support under uncertainty literature.
+`top_methods` reveals the methodological ecosystem's core components, highlighting established practices and potential gaps in decision support under uncertainty literature.
 
 ## VOI Method Validation
+
+We examine Value of Information (VOI) papers specifically to assess classification plausibility and confidence distribution within this focused methodological domain.
 
 ```{r validation_check}
 # Quick validation - check if our detection makes sense
@@ -320,15 +421,14 @@ validation_check <- clean_bib_data %>%
   select(TITLE, detected_methods, method_confidence) %>%
   arrange(desc(method_confidence))
 
-cat("\n=== VALIDATION CHECK - VOI PAPERS ===\n")
 print(validation_check)
 ```
 
-**Validation:** We examine Value of Information (VOI) papers specifically to assess classification plausibility and confidence distribution within this focused methodological domain.
-
-**Purpose:** This targeted validation ensures classification accuracy for the core methodological focus area, building confidence in automated detection for specialized methodological analysis.
+`validation_check` ensures classification accuracy.
 
 ## High-Reliability Classifications
+
+We examine the subset of classifications receiving the highest confidence rating, where methods were detected in both titles and full text.
 
 ```{r high_confidence}
 # Check papers with high confidence
@@ -336,15 +436,12 @@ high_confidence <- clean_bib_data %>%
   filter(method_confidence == "high") %>%
   select(TITLE, detected_methods, methods_from_title)
 
-cat("\n=== HIGH CONFIDENCE CLASSIFICATIONS ===\n")
 print(high_confidence)
 ```
 
-**Quality Assessment:** We examine the subset of classifications receiving the highest confidence rating, where methods were detected in both titles and full text.
-
-**Purpose:** This validates the classification system's precision by reviewing its most reliable outputs, establishing trust in the automated methodology for key findings and conclusions.
-
 ## Interactive Reference Browser
+
+We provide an interactive reference browser using the `DT` package [@R-DT] for easy navigation of the analyzed literature collection.
 
 ```{r datatable_clean_bib_data}
 # Minimal interactive table
@@ -366,10 +463,6 @@ DT::datatable(
   filter = "none"  # remove filter to save space
 )
 ```
-
-**Accessibility:** We provide an interactive reference browser using the `DT` package [@R-DT] for easy navigation of the analyzed literature collection.
-
-**Purpose:** This enables readers to explore the source material directly, verifying context and supporting transparent engagement with the underlying bibliographic data.
 
 ```{r child="References.Rmd"}
 ```
