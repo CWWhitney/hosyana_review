@@ -15,27 +15,28 @@ abstract: |
 bibliography: 
   - bib/01_introduction.bib
   - bib/01_1_review_synthesis.bib
+  - bib/packages.bib
 csl: apa.csl
 link-citations: true
 output: 
   bookdown::html_document2:
     toc: true
-    toc_depth: 4
+    toc_depth: 3
     toc_float:
-      collapsed: false
+      collapsed: true
       smooth_scroll: true
     number_sections: true
     theme: 
       version: 4
-      bootswatch: cosmo
-    highlight: pygments
-    code_folding: hide
-    code_download: true
+      bootswatch: flatly
+    highlight: textmate
+    code_folding: show
+    code_download: false
     fig_width: 10
     fig_height: 6
     fig_caption: true
     keep_md: true
-    df_print: paged
+    df_print: kable
 ---
 
 ```{r setup, include=FALSE, message=FALSE, warning=FALSE}
@@ -77,6 +78,14 @@ suppressPackageStartupMessages({
   library(ggthemes)      # Additional ggplot themes
 })
 
+# Generate bibliography for all used packages
+packages_to_cite <- c("bib2df", 
+                      "dplyr", "tidyr", 
+                      "stringr", "purrr", 
+                      "ggplot2", 
+                     "knitr", "bookdown", "DT")
+knitr::write_bib(packages_to_cite, "bib/packages.bib")
+
 # Set ggplot theme for consistent styling
 theme_set(theme_minimal(base_size = 12, base_family = "sans"))
 theme_update(
@@ -110,21 +119,37 @@ method_colors <- c(
 ```{r child = "01_1_Review_and_Synthesis.rmd"}
 ```
 
-```{r clean_bib_data}
+# Data Import and Preprocessing
 
+## Reading Bibliographic Data
+
+```{r read_data, echo=TRUE}
 # Read the bib file
-bib_data <- bib2df("bib/23_Methods_Review_Holistic_Systems.bib")
+bib_data <- bib2df::bib2df("bib/23_Methods_Review_Holistic_Systems.bib")
+```
 
+**Rationale:** We import bibliographic records using the `bib2df` package [@R-bib2df], which converts BibTeX files into structured data frames. This enables systematic processing of large literature collections (n = `r nrow(bib_data)`) while preserving metadata integrity.
+
+## Data Cleaning and Feature Engineering
+
+```{r clean_data, echo=TRUE}
 # Basic cleaning and text preparation
 clean_bib_data <- bib_data %>%
-  mutate(
+  dplyr::mutate(
     has_annotation = !is.na(ANNOTE) & ANNOTE != "",
     annotation_text = ifelse(has_annotation, ANNOTE, ""),
     full_text = paste(TITLE, ANNOTE, sep = " "),
     year = as.numeric(YEAR)
   )
-
 ```
+
+**Methodology:** Using `dplyr` [@R-dplyr], we create analysis-ready features:
+
+- **Annotation tracking**: Identify `r sum(clean_bib_data$has_annotation)` annotated papers for validation
+- **Text consolidation**: Combine titles and annotations for method detection
+- **Temporal normalization**: Convert publication years for trend analysis
+
+This preprocessing ensures consistent data structure for automated classification of methodological approaches.
 
 ```{r method_categories}
 # method categories
@@ -141,27 +166,35 @@ method_categories <- list(
 )
 ```
 
-```{r detect_methods}
+## Automated Method Detection
 
+```{r detect_methods}
 source("R/detect_methods_enhanced.R")
 # Apply method detection
 clean_bib_data <- clean_bib_data %>%
   mutate(
     detected_methods = map_chr(full_text, detect_methods_enhanced),
-    
-    # Also detect from title only for confidence scoring
     methods_from_title = map_chr(TITLE, detect_methods_enhanced)
   )
-
 ```
 
-```{r add_confidence_scores}
+**Method:** We apply automated classification using a custom dictionary-based algorithm (`detect_methods_enhanced.R`) that identifies methodological approaches from text content. The `purrr` package [@R-purrr] enables efficient vectorized processing across all records.
 
+**Purpose:** Dual detection (full text and titles only) enables confidence scoring, where methods appearing in titles receive higher reliability weights for subsequent analysis.
+
+## Confidence Scoring
+
+```{r add_confidence_scores}
 source("R/add_confidence_scores.R")
 # Apply confidence scoring
 clean_bib_data <- add_confidence_scores(clean_bib_data)
-
 ```
+
+**Method:** We assign confidence levels to method classifications based on detection location. Methods identified in titles receive higher confidence than those found only in annotations, enabling quality-weighted analysis.
+
+**Purpose:** Confidence scoring prioritizes reliable classifications for key findings while maintaining comprehensive coverage, balancing precision and recall in automated text analysis.
+
+## Method Detection Validation
 
 ```{r method_detection_check}
 # Quick check of what we detected
@@ -171,11 +204,15 @@ cat("Papers with methods detected:", sum(clean_bib_data$detected_methods != ""),
 cat("Papers with VOI:", sum(clean_bib_data$has_voi), "\n")
 cat("Confidence distribution:\n")
 print(table(clean_bib_data$method_confidence))
-
 ```
 
-```{r sample_results}
+**Quality Control:** We validate the automated classification by reporting key metrics including detection rates and confidence level distribution.
 
+**Purpose:** This summary ensures methodological transparency and provides immediate insight into classification performance before detailed analysis.
+
+## Classification Examples
+
+```{r sample_results}
 # Show some examples
 cat("\n=== SAMPLE OF DETECTED METHODS ===\n")
 sample_results <- clean_bib_data %>%
@@ -186,22 +223,37 @@ sample_results <- clean_bib_data %>%
 print(sample_results)
 ```
 
+**Validation:** We display representative examples of automated method classifications to illustrate detection accuracy and confidence assignment.
+
+**Purpose:** Sample inspection provides face validity assessment and helps identify potential classification patterns or issues before full-scale analysis.
+
+## Method Frequency Analysis
+
 ```{r method_results_plot}
 source("R/analyze_method_frequency.R")
-
 
 method_results <- analyze_method_frequency(clean_bib_data)
 print(method_results$plot)
 print(method_results$counts)
 ```
 
+**Analysis:** We quantify and visualize the distribution of methodological approaches across the literature using frequency analysis and bar chart visualization via `ggplot2` [@R-ggplot2].
+
+**Purpose:** This reveals dominant methodological paradigms and identifies less common approaches, providing the foundational landscape for understanding methodological preferences in decision support under uncertainty.
+
+## Value of Information Analysis
 
 ```{r voi_results}
 source("R/analyze_voi_papers.R")
 # Analyze VOI papers
 voi_results <- analyze_voi_papers(clean_bib_data)
-
 ```
+
+**Focus:** We conduct specialized analysis of Value of Information (VOI) literature, examining methodological patterns and temporal trends within this key decision-support approach.
+
+**Purpose:** This targeted analysis identifies methodological evolution and application contexts specific to VOI, informing recommendations for methodological integration in uncertainty-aware decision frameworks.
+
+## Results Export
 
 ```{r results_table}
 # Create a comprehensive results table
@@ -220,22 +272,30 @@ results_table <- clean_bib_data %>%
 
 # Export for manual verification
 write.csv(results_table, "data/method_detection_results.csv", row.names = FALSE)
-
 ```
 
-```{r summary_report}
+**Documentation:** We compile all classification results into a structured table and export for external validation and secondary analysis.
 
+**Purpose:** This ensures full reproducibility, enables manual verification of automated classifications, and provides a foundation for future methodological studies using this annotated dataset.
+
+## Analysis Summary
+
+```{r summary_report}
 # Create summary report
 cat("\n=== EXPORT SUMMARY ===\n")
 cat("Results exported to: method_detection_results.csv\n")
 cat("Total papers processed:", nrow(clean_bib_data), "\n")
 cat("Papers with methods:", sum(clean_bib_data$detected_methods != ""), "\n")
 cat("High confidence classifications:", sum(clean_bib_data$method_confidence == "high"), "\n")
-
 ```
 
-```{r top_methods}
+**Synthesis:** We provide a comprehensive summary of the automated classification pipeline performance and output metrics.
 
+**Purpose:** This final summary quantifies analysis scope and classification reliability, establishing the foundation for subsequent methodological interpretation and research recommendations.
+
+## Dominant Methodological Approaches
+
+```{r top_methods}
 # Show top methods
 top_methods <- clean_bib_data %>%
   filter(detected_methods != "") %>%
@@ -246,6 +306,12 @@ top_methods <- clean_bib_data %>%
 cat("\nTop 10 methods detected:\n")
 print(top_methods)
 ```
+
+**Findings:** We identify the most prevalent methodological approaches using frequency analysis and `tidyr` [@R-tidyr] for data restructuring.
+
+**Purpose:** This reveals the methodological ecosystem's core components, highlighting established practices and potential gaps in decision support under uncertainty literature.
+
+## VOI Method Validation
 
 ```{r validation_check}
 # Quick validation - check if our detection makes sense
@@ -258,9 +324,13 @@ cat("\n=== VALIDATION CHECK - VOI PAPERS ===\n")
 print(validation_check)
 ```
 
+**Validation:** We examine Value of Information (VOI) papers specifically to assess classification plausibility and confidence distribution within this focused methodological domain.
+
+**Purpose:** This targeted validation ensures classification accuracy for the core methodological focus area, building confidence in automated detection for specialized methodological analysis.
+
+## High-Reliability Classifications
 
 ```{r high_confidence}
-
 # Check papers with high confidence
 high_confidence <- clean_bib_data %>%
   filter(method_confidence == "high") %>%
@@ -269,6 +339,12 @@ high_confidence <- clean_bib_data %>%
 cat("\n=== HIGH CONFIDENCE CLASSIFICATIONS ===\n")
 print(high_confidence)
 ```
+
+**Quality Assessment:** We examine the subset of classifications receiving the highest confidence rating, where methods were detected in both titles and full text.
+
+**Purpose:** This validates the classification system's precision by reviewing its most reliable outputs, establishing trust in the automated methodology for key findings and conclusions.
+
+## Interactive Reference Browser
 
 ```{r datatable_clean_bib_data}
 # Minimal interactive table
@@ -290,6 +366,10 @@ DT::datatable(
   filter = "none"  # remove filter to save space
 )
 ```
+
+**Accessibility:** We provide an interactive reference browser using the `DT` package [@R-DT] for easy navigation of the analyzed literature collection.
+
+**Purpose:** This enables readers to explore the source material directly, verifying context and supporting transparent engagement with the underlying bibliographic data.
 
 ```{r child="References.Rmd"}
 ```
