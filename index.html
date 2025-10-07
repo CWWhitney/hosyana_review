@@ -11,7 +11,7 @@
 
 <meta name="author" content="Cory Whitney" />
 
-<meta name="date" content="2025-10-02" />
+<meta name="date" content="2025-10-07" />
 
 <title>Methods for Supporting Decisions under Uncertainty</title>
 
@@ -2892,7 +2892,7 @@ display: none;
 <h1 class="title toc-ignore">Methods for Supporting Decisions under
 Uncertainty</h1>
 <h4 class="author">Cory Whitney</h4>
-<h4 class="date">October 02, 2025</h4>
+<h4 class="date">October 07, 2025</h4>
 
 </div>
 
@@ -2918,6 +2918,8 @@ criteria:</a></li>
 <li><a href="#reading-bibliographic-data" id="toc-reading-bibliographic-data">Reading Bibliographic Data</a></li>
 <li><a href="#data-cleaning-and-feature-engineering" id="toc-data-cleaning-and-feature-engineering">Data Cleaning and Feature
 Engineering</a></li>
+<li><a href="#run-prisma-pipeline" id="toc-run-prisma-pipeline">Run
+PRISMA Pipeline</a></li>
 <li><a href="#method-term-discovery" id="toc-method-term-discovery">Method Term Discovery</a></li>
 <li><a href="#sample-sentences-containing-methodological-terms" id="toc-sample-sentences-containing-methodological-terms">Sample
 Sentences Containing Methodological Terms</a></li>
@@ -3147,6 +3149,184 @@ clean_bib_data &lt;- bib_data %&gt;%
     year = as.numeric(YEAR)
   )</code></pre>
 <p>(3499 of the citations have annotations.</p>
+<pre class="r"><code># Apply manual classifications from Zotero keywords
+source(&quot;R/classify_papers.R&quot;)
+clean_bib_data &lt;- classify_papers(clean_bib_data)
+
+# Summary of manual classifications
+manual_summary &lt;- clean_bib_data %&gt;%
+  count(manual_classification, manual_reason)
+
+knitr::kable(manual_summary, caption = &quot;Manual Classification Summary&quot;)</code></pre>
+<table>
+<caption>Manual Classification Summary</caption>
+<thead>
+<tr class="header">
+<th align="left">manual_classification</th>
+<th align="left">manual_reason</th>
+<th align="right">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">exclude</td>
+<td align="left">Marked for removal by curator</td>
+<td align="right">139</td>
+</tr>
+<tr class="even">
+<td align="left">include</td>
+<td align="left">Manually reviewed and kept</td>
+<td align="right">83</td>
+</tr>
+<tr class="odd">
+<td align="left">unclassified</td>
+<td align="left">Not yet manually reviewed</td>
+<td align="right">14978</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># Function to apply automated exclusion rules
+apply_exclusion_rules &lt;- function(data) {
+  
+  # Check if LANGUAGE column exists and handle safely
+  has_language_column &lt;- &quot;LANGUAGE&quot; %in% names(data)
+  
+  data %&gt;%
+    mutate(
+      # Rule 1: Document type exclusions
+      exclude_document_type = case_when(
+        str_detect(tolower(TITLE), &quot;annual report|syllabus|catalog|course notes&quot;) ~ TRUE,
+        str_detect(tolower(TITLE), &quot;legal document|law review&quot;) ~ TRUE,
+        str_detect(tolower(TITLE), &quot;preprint|thesis&quot;) &amp; 
+          !is.na(JOURNAL) ~ TRUE,
+        TRUE ~ FALSE
+      ),
+      
+      # Rule 2: Language exclusion - fixed vectorization
+      exclude_language = if(has_language_column) {
+        !is.na(LANGUAGE) &amp; tolower(LANGUAGE) != &quot;english&quot;
+      } else {
+        rep(FALSE, n())  # Return FALSE for all rows if no LANGUAGE column
+      },
+      
+      # Rule 3: Content relevance
+      exclude_content = case_when(
+        !str_detect(tolower(TITLE), &quot;decision|model|analysis|support&quot;) ~ TRUE,
+        str_detect(tolower(TITLE), &quot;bibliography collection|duplicate&quot;) ~ TRUE,
+        TRUE ~ FALSE
+      ),
+      
+      # Combined automated exclusion
+      automated_exclude = exclude_document_type | exclude_language | exclude_content,
+      
+      # Final classification
+      final_classification = case_when(
+        manual_classification == &quot;exclude&quot; ~ &quot;exclude&quot;,
+        manual_classification == &quot;include&quot; ~ &quot;include&quot;, 
+        automated_exclude ~ &quot;exclude&quot;,
+        TRUE ~ &quot;unclassified&quot;
+      ),
+      
+      # Reason for automated decisions
+      exclusion_reason = case_when(
+        manual_classification == &quot;exclude&quot; ~ manual_reason,
+        exclude_document_type ~ &quot;Invalid document type&quot;,
+        exclude_language ~ &quot;Non-English publication&quot;,
+        exclude_content ~ &quot;Irrelevant content&quot;, 
+        manual_classification == &quot;include&quot; ~ manual_reason,
+        TRUE ~ &quot;Pending review&quot;
+      )
+    )
+}
+
+# Apply exclusion rules
+clean_bib_data &lt;- apply_exclusion_rules(clean_bib_data)</code></pre>
+</div>
+<div id="run-prisma-pipeline" class="section level2">
+<h2>Run PRISMA Pipeline</h2>
+<pre class="r"><code>source(&quot;R/run_prisma_pipeline.R&quot;)
+
+  # Load all steps
+  source(&quot;R/prisma_config.R&quot;)
+  source(&quot;R/identify_duplicates.R&quot;)
+  source(&quot;R/manual_classifications.R&quot;) 
+  source(&quot;R/automated_exclusions.R&quot;)
+  source(&quot;R/final_classification.R&quot;)
+  source(&quot;R/prisma_stats.R&quot;)
+  source(&quot;R/export_results.R&quot;)
+  source(&quot;R/prisma_flow_output.R&quot;)
+
+# Run the complete PRISMA pipeline
+prisma_results &lt;- run_prisma_pipeline(clean_bib_data)</code></pre>
+<pre><code>## # PRISMA Flow Diagram Numbers
+## 
+## ## Identification
+## - Records identified through Google Scholar:  19
+## - Records identified through Web of Science:  0
+## - Records identified through other sources:  15181
+## - **Total records identified**:  15200
+## 
+## ## Screening
+## - Duplicates removed:  570
+## - Records screened:  14630
+## - Not relevant (automated):  10232
+## - Not fitting assessment details:  6
+## 
+## ## Included
+## - Reports sought for retrieval:  4307
+## - Reports assessed for eligibility:  83
+## - **Quantitative assessment**:  4307
+## - **Qualitative synthesis**:  83
+## - **Studies included in review**:  4307</code></pre>
+<pre class="r"><code># Access results
+prisma_results$statistics</code></pre>
+<pre><code>## $identification
+## $identification$records_identified_gs
+## [1] 19
+## 
+## $identification$records_identified_wos
+## [1] 0
+## 
+## $identification$records_identified_other
+## [1] 15181
+## 
+## $identification$total_identified
+## [1] 15200
+## 
+## 
+## $screening
+## $screening$duplicates_removed
+## [1] 570
+## 
+## $screening$not_relevant_automated
+## [1] 10232
+## 
+## $screening$not_fitting_assessment
+## [1] 6
+## 
+## $screening$records_screened
+## [1] 14630
+## 
+## 
+## $included
+## $included$sought_retrieval
+## [1] 4307
+## 
+## $included$assessed_eligibility
+## [1] 83
+## 
+## $included$quantitative_assessment
+## [1] 4307
+## 
+## $included$qualitative_synthesis
+## [1] 83
+## 
+## $included$studies_included
+## [1] 4307</code></pre>
+<pre class="r"><code>prisma_results$export_files$included_count</code></pre>
+<pre><code>## [1] 4307</code></pre>
+<pre class="r"><code>prisma_results$export_files$excluded_count</code></pre>
+<pre><code>## [1] 10893</code></pre>
 </div>
 <div id="method-term-discovery" class="section level2">
 <h2>Method Term Discovery</h2>
