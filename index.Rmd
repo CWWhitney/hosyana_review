@@ -125,6 +125,102 @@ clean_bib_data <- bib_data %>%
 
 (`r sum(clean_bib_data$has_annotation)` of the citations have annotations.
 
+```{r clean_bib_data}
+# Apply manual classifications from Zotero keywords
+source("R/classify_papers.R")
+clean_bib_data <- classify_papers(clean_bib_data)
+
+# Summary of manual classifications
+manual_summary <- clean_bib_data %>%
+  count(manual_classification, manual_reason)
+
+knitr::kable(manual_summary, caption = "Manual Classification Summary")
+```
+
+```{r}
+# Function to apply automated exclusion rules
+apply_exclusion_rules <- function(data) {
+  
+  # Check if LANGUAGE column exists and handle safely
+  has_language_column <- "LANGUAGE" %in% names(data)
+  
+  data %>%
+    mutate(
+      # Rule 1: Document type exclusions
+      exclude_document_type = case_when(
+        str_detect(tolower(TITLE), "annual report|syllabus|catalog|course notes") ~ TRUE,
+        str_detect(tolower(TITLE), "legal document|law review") ~ TRUE,
+        str_detect(tolower(TITLE), "preprint|thesis") & 
+          !is.na(JOURNAL) ~ TRUE,
+        TRUE ~ FALSE
+      ),
+      
+      # Rule 2: Language exclusion - fixed vectorization
+      exclude_language = if(has_language_column) {
+        !is.na(LANGUAGE) & tolower(LANGUAGE) != "english"
+      } else {
+        rep(FALSE, n())  # Return FALSE for all rows if no LANGUAGE column
+      },
+      
+      # Rule 3: Content relevance
+      exclude_content = case_when(
+        !str_detect(tolower(TITLE), "decision|model|analysis|support") ~ TRUE,
+        str_detect(tolower(TITLE), "bibliography collection|duplicate") ~ TRUE,
+        TRUE ~ FALSE
+      ),
+      
+      # Combined automated exclusion
+      automated_exclude = exclude_document_type | exclude_language | exclude_content,
+      
+      # Final classification
+      final_classification = case_when(
+        manual_classification == "exclude" ~ "exclude",
+        manual_classification == "include" ~ "include", 
+        automated_exclude ~ "exclude",
+        TRUE ~ "unclassified"
+      ),
+      
+      # Reason for automated decisions
+      exclusion_reason = case_when(
+        manual_classification == "exclude" ~ manual_reason,
+        exclude_document_type ~ "Invalid document type",
+        exclude_language ~ "Non-English publication",
+        exclude_content ~ "Irrelevant content", 
+        manual_classification == "include" ~ manual_reason,
+        TRUE ~ "Pending review"
+      )
+    )
+}
+
+# Apply exclusion rules
+clean_bib_data <- apply_exclusion_rules(clean_bib_data)
+```
+
+
+## Run PRISMA Pipeline
+
+```{r prisma_pipeline}
+source("R/run_prisma_pipeline.R")
+
+  # Load all steps
+  source("R/prisma_config.R")
+  source("R/identify_duplicates.R")
+  source("R/manual_classifications.R") 
+  source("R/automated_exclusions.R")
+  source("R/final_classification.R")
+  source("R/prisma_stats.R")
+  source("R/export_results.R")
+  source("R/prisma_flow_output.R")
+
+# Run the complete PRISMA pipeline
+prisma_results <- run_prisma_pipeline(clean_bib_data)
+
+# Access results
+prisma_results$statistics
+prisma_results$export_files$included_count
+prisma_results$export_files$excluded_count
+```
+
 ## Method Term Discovery
 
 We search the bibliographic record for methodological terms from titles, abstracts, keywords, and annotations.
