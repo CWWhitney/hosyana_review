@@ -338,27 +338,18 @@ method_categories <- list(
 
 ## Automated Method Detection
 
-We apply automated classification using a custom dictionary-based algorithm (`detect_methods_enhanced.R`) that identifies methodological approaches from text content. The `purrr` package [@R-purrr] enables efficient vectorized processing across all records. Our dual detection (full text and titles only) enables confidence scoring, where methods appearing in titles receive higher reliability weights for subsequent analysis.
+We apply automated classification using a custom dictionary-based algorithm (`detect_methods.R`) that identifies methodological approaches from text content. The `purrr` package [@R-purrr] enables efficient vectorized processing across all records. Our dual detection (full text and titles only) enables confidence scoring, where methods appearing in titles receive higher reliability weights for subsequent analysis.
 
 ```{r detect_methods}
-source("R/detect_methods_enhanced.R")
+source("R/detect_methods.R")
 # Apply method detection
 clean_bib_data <- clean_bib_data %>%
   mutate(
-    detected_methods = map_chr(full_text, detect_methods_enhanced),
-    methods_from_title = map_chr(TITLE, detect_methods_enhanced)
+    detected_methods = map_chr(full_text, detect_methods),
+    methods_from_title = map_chr(TITLE, detect_methods)
   )
 ```
 
-## Confidence Scoring
-
-We assign confidence levels to method classifications based on detection location. Methods identified in titles receive higher confidence than those found only in annotations, enabling quality-weighted analysis.
-
-```{r add_confidence_scores}
-source("R/add_confidence_scores.R")
-# Apply confidence scoring
-clean_bib_data <- add_confidence_scores(clean_bib_data)
-```
 
 ## Method Detection Validation
 
