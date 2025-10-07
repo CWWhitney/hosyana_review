@@ -2924,8 +2924,6 @@ PRISMA Pipeline</a></li>
 <li><a href="#sample-sentences-containing-methodological-terms" id="toc-sample-sentences-containing-methodological-terms">Sample
 Sentences Containing Methodological Terms</a></li>
 <li><a href="#automated-method-detection" id="toc-automated-method-detection">Automated Method Detection</a></li>
-<li><a href="#confidence-scoring" id="toc-confidence-scoring">Confidence
-Scoring</a></li>
 <li><a href="#method-detection-validation" id="toc-method-detection-validation">Method Detection
 Validation</a></li>
 <li><a href="#classification-examples" id="toc-classification-examples">Classification Examples</a></li>
@@ -3773,30 +3771,18 @@ method_categories &lt;- list(
 <div id="automated-method-detection" class="section level2">
 <h2>Automated Method Detection</h2>
 <p>We apply automated classification using a custom dictionary-based
-algorithm (<code>detect_methods_enhanced.R</code>) that identifies
-methodological approaches from text content. The <code>purrr</code>
-package <span class="citation">(Wickham and Henry 2025)</span> enables
-efficient vectorized processing across all records. Our dual detection
-(full text and titles only) enables confidence scoring, where methods
-appearing in titles receive higher reliability weights for subsequent
-analysis.</p>
-<pre class="r"><code>source(&quot;R/detect_methods_enhanced.R&quot;)
+algorithm (<code>detect_methods.R</code>) that identifies methodological
+approaches from text content. The <code>purrr</code> package <span class="citation">(Wickham and Henry 2025)</span> enables efficient
+vectorized processing across all records. Our dual detection (full text
+and titles only) enables confidence scoring, where methods appearing in
+titles receive higher reliability weights for subsequent analysis.</p>
+<pre class="r"><code>source(&quot;R/detect_methods.R&quot;)
 # Apply method detection
 clean_bib_data &lt;- clean_bib_data %&gt;%
   mutate(
-    detected_methods = map_chr(full_text, detect_methods_enhanced),
-    methods_from_title = map_chr(TITLE, detect_methods_enhanced)
+    detected_methods = map_chr(full_text, detect_methods),
+    methods_from_title = map_chr(TITLE, detect_methods)
   )</code></pre>
-</div>
-<div id="confidence-scoring" class="section level2">
-<h2>Confidence Scoring</h2>
-<p>We assign confidence levels to method classifications based on
-detection location. Methods identified in titles receive higher
-confidence than those found only in annotations, enabling
-quality-weighted analysis.</p>
-<pre class="r"><code>source(&quot;R/add_confidence_scores.R&quot;)
-# Apply confidence scoring
-clean_bib_data &lt;- add_confidence_scores(clean_bib_data)</code></pre>
 </div>
 <div id="method-detection-validation" class="section level2">
 <h2>Method Detection Validation</h2>
