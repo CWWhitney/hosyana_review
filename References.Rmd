@@ -1,2 +1,28 @@
+## Interactive Reference Browser
+
+Interactive reference browser of the full literature collection with the `DT` package [@R-DT].
+
+```{r datatable_clean_bib_data, include=FALSE}
+# Minimal interactive table
+DT::datatable(
+  clean_bib_data %>%
+    select(
+      Author = AUTHOR,
+      Year = YEAR,
+      Title = TITLE
+    ) %>%
+    arrange(desc(Year), Author),
+  options = list(
+    pageLength = 5,
+    lengthMenu = c(5, 10, 20),
+    dom = 'tip'  # table, info, pagination only
+  ),
+  caption = "Reference List",
+  rownames = FALSE,
+  filter = "none"  # remove filter to save space
+)
+```
+
+
 ## References
 

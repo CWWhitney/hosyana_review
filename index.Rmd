@@ -51,7 +51,9 @@ suppressPackageStartupMessages({
   library(scales)        # Plot scales
   library(kableExtra)    # Enhanced tables
   library(knitr)
+  library(magrittr)
   library(DT)            # Interactive tables
+  library(networkD3)
   library(ggthemes)      # Additional ggplot themes
 })
 
@@ -63,7 +65,9 @@ packages_to_cite <- c("bib2df",
                       "purrr", 
                       "ggplot2", 
                      "knitr", 
+                     "magrittr",
                      "bookdown", 
+                     "networkD3",
                      "DT")
 knitr::write_bib(packages_to_cite, "bib/packages.bib")
 
@@ -97,8 +101,168 @@ method_colors <- c(
 ```{r child="01_Introduction.Rmd"}
 ```
 
-```{r child = "01_1_Review_and_Synthesis.rmd"}
+# Review and Synthesis
+
+# Protocol-driven approach to reviewing decision support methods
+
+## Literature collection
+
+We followed the PRISMA (Preferred Reporting Items for Systematic Reviews and Meta-Analyses). We gathered data from the Web of Science Core Collection curated database of published, peer-reviewed and larger and more diverse published articles, preprints, theses, books, and other relevant scientific content in Google Scholar and the Centre for Agriculture and Biosciences International (CABI) Digital Library. After much deliberation and discussion amongst the authors, the final search query consisted of the following keywords.
+
+*Web of Science* yielded 14 results
+
+**Decision + Intervention OR policy + Uncertainty + Expert OR stakeholder + Model OR monte carlo OR simulation OR computer assisted + value of information OR information accuracy**
+
+*CABI* yielded 13 results
+
+Decision + Intervention OR policy + Uncertainty + Expert OR stakeholder + Model OR "monte carlo" OR simulation OR "computer assisted" + "value of information" OR "information accuracy"
+
+*Google Scholar* yielded 17500+^[17,600 results but without an asterisk for decision* and model* it yielded just 17,400 results. This is a bit counter intuitive; the ‘*’ should widen rather than narrow the search. If anything, we should expect the opposite effect and the larger return in the former search. Then these 200 additional results would say something like ‘models’ or ‘decisions’ but not ‘model’ or ‘decision’. These should be kept.] results 
+
+"decision"+("intervention"OR"policy")+"uncertainty"+("expert"OR"stakeholder")+("model"OR"monte carlo"OR"simulation"OR"Bayesian"OR"computer assisted")+
+("value of information"OR"information accuracy")^[‘Google Scholar advanced search’ was much less targeted (2.4 million hits):  where any of the words of our search occur anywhere in the article.]
+
+We collected records in April to July 2023. Associated papers and articles from the search records were also gathered as secondary data collection. Some had shared arXiv or doi links, other parts of shared contributions and assorted affiliations that led to new papers. We applied specific inclusion criteria to this large set of records to reduce the number of records covered under this study. An independent screening of the collected records is performed to confirm their eligibility for the study.
+
+### Inclusion criteria: 
+
+1. Record should be in the English language, 
+1. Scientific articles, reports and others are included,
+1. Must involve some form of decision-making or decision-supporting aspect,
+
+### Reasons for exclusion
+
+- Annual reports, syllabus, catalogs of studies, unrelated legal documents, published bibliography collections, duplicates, course notes, preprints (where we already have the published journal article)
+- All non-scientific reports and case studies
+
+![(#fig:02_prisma) Overview of the methods review process following the the Preferred Reporting Items for Systematic Reviews and Meta-Analyses (PRISMA)](figs/02_PRISMA_Flow.png)
+
+We followed the Preferred Reporting Items for Systematic Reviews and Meta-Analyses (PRISMA) \@ref(fig:02_prisma) SystematicReviewOverviewFigure 
+
+<!-- temporary note to the co-author team, this figure is editable at this address https://docs.google.com/presentation/d/1TLnVV3VIgcoUeXoBwmzvjdg-08AEW0mhrmnCHfVXQwY/edit#slide=id.p -->
+
+We preserved our search string on searchRxiv [@whitneyReviewMethodsSupporting2023]
+
+After importing papers to Zotero we: 
+
+-	Ran a native PDF search in Zotero to find missing PDFs.
+- Did a manual PDF search for ~1000 ^[Look up web pages that report findings to find original publication, proceedings (200), papers (400), thesis (300)]
+-	Remove spurious work that turned up in the results: Annual reports (50+), syllabus / catalogs of studies (100+), unrelated legal documents (30+), published bibliography collections, duplicates (50+), course notes (20), preprints (where we already have the published journal article 50)
+-	Add papers to our collection that appear in the bibliography and syllabus that were not already in the search (400+).  
+- Formatted meta-data for all references with Linter https://github.com/northword/zotero-format-metadata
+
+In looking for the PDFs and following up with some of the thesis, notes, syllabi etc. in the list we added additional associated papers and articles. Some had shared arXiv or doi links, other parts of shared contributions and assorted affiliations that lead to new papers. Sometimes the class notes and syllabus that were in the scholar search return were there because they listed papers that were relevant to our search terms. These were sometimes already in our main collection and sometimes not. When they were not in our collection, we added them.  
+
+# Data Import and Preprocessing
+
+## Bibliographic Data
+
+Import bibliographic records using the `bib2df` package [@R-bib2df], converting our BibTeX file into a structured data frame for systematic processing.
+
+```{r read_data, echo=TRUE}
+# Read the bib file
+bib_data <- bib2df::bib2df("bib/23_Methods_Review_Holistic_Systems.bib")
 ```
+
+Our BibTeX contains (n = `r nrow(bib_data)`) citations.
+
+## BibTeX Cleaning
+
+We prepare the BibTeX file using `dplyr` [@R-dplyr], for annotation tracking and text consolidation.
+
+```{r clean_data, echo=TRUE}
+# Basic cleaning and text preparation
+clean_bib_data <- bib_data %>%
+  dplyr::mutate(
+    has_annotation = !is.na(ANNOTE) & ANNOTE != "",
+    annotation_text = ifelse(has_annotation, ANNOTE, ""),
+    full_text = paste(TITLE, ANNOTE, sep = " "),
+    year = as.numeric(YEAR)
+  )
+```
+
+`r sum(clean_bib_data$has_annotation)` of the citations have annotations.
+
+```{r clean_bib_data}
+# Apply manual classifications from Zotero keywords
+source("R/classify_papers.R")
+clean_bib_data <- classify_papers(clean_bib_data)
+
+# Summary of manual classifications
+manual_summary <- clean_bib_data %>%
+  count(manual_classification, manual_reason)
+
+knitr::kable(manual_summary, caption = "Manual Classification Summary")
+```
+
+```{r apply_exclusion_rules}
+source("R/apply_exclusion_rules.R")
+# Apply exclusion rules
+clean_bib_data <- apply_exclusion_rules(clean_bib_data)
+```
+
+Cleaned BibTeX contains (n = `r nrow(bib_data)`) citations.
+
+## Run PRISMA Pipeline
+
+```{r prisma_pipeline}
+source("R/run_prisma_pipeline.R")
+
+  # Load all steps
+  source("R/prisma_config.R")
+  source("R/identify_duplicates.R")
+  source("R/apply_exclusion_rules.R")
+  source("R/apply_manual_classifications.R") 
+  source("R/final_classification.R")
+  source("R/generate_prisma_stats.R")
+  source("R/export_results.R")
+  source("R/generate_prisma_flow_output.R")
+
+# Run the complete PRISMA pipeline
+prisma_results <- run_prisma_pipeline(clean_bib_data)
+
+# Access results
+prisma_results$statistics
+prisma_results$export_files$included_count
+prisma_results$export_files$excluded_count
+```
+
+```{r validate_manual_decisions}
+# Run steps in correct order
+source("R/identify_duplicates.R")
+source("R/apply_manual_classifications.R") 
+source("R/apply_final_classification.R")
+source("R/validate_manual_decisions.R")
+
+clean_bib_data <- identify_duplicates(clean_bib_data)
+clean_bib_data <- apply_manual_classifications(clean_bib_data)
+clean_bib_data <- apply_final_classification(clean_bib_data)
+
+validation_results <- validate_manual_decisions(clean_bib_data)
+
+```
+
+### Inclusion criteria: 
+
+We employed a systematic review approach with minimal exclusions:
+
+1. Scientific articles and reports (`r prisma_results$step_counts$excluded_non_scientific` clearly non-scientific excluded),
+1. No content-based exclusions to ensure comprehensive coverage
+
+### Reasons for exclusion
+
+- Clearly inappropriate document types: annual reports, syllabus, course notes (`r prisma_results$step_counts$excluded_doc_type` excluded),
+- Duplicates (`r prisma_results$step_counts$duplicates_removed` removed),
+- Preprints when published versions were available (`r prisma_results$step_counts$excluded_preprint` excluded),
+- Manually marked for exclusion during preliminary screening (`r prisma_results$step_counts$manually_excluded` excluded)
+
+**Note:** We did not exclude based on content relevance to ensure comprehensive methodological coverage, resulting in `r prisma_results$step_counts$final_included` papers for analysis.
+
+## Methodology extraction
+
+We use Keeney’s representation of where formal decision support is required and applied as motivation and framework for the assessment - Keeney’s judgment about how 10,000 decisions are typically made - his personal histogram of 10,000 decisions being faced by numerous decision makers \@ref(#fig:01_keeney) [@keeneyMakingBetterDecision2004b].
+
+![(#fig:01_keeney) Keeney’s judgment about how 10,000 decisions are typically made - his personal histogram of 10,000 decisions being faced by numerous decision makers](figs/fig01_Keeney.png)
 
 ## Method Term Discovery
 
@@ -256,19 +420,19 @@ knitr::kable(detection_summary,
              col.names = c("Metric", "Count"))
 ```
 
-## Classification Examples
+<!-- ## Classification Examples -->
 
-We display representative examples of automated method classifications to illustrate detection accuracy and confidence assignment. 
+<!-- We display representative examples of automated method classifications to illustrate detection accuracy and confidence assignment.  -->
 
-```{r sample_results}
-# Show some examples
-sample_results <- clean_bib_data %>%
-  filter(detected_methods != "") %>%
-  select(TITLE, detected_methods, method_confidence) %>%
-  head(10)
+<!-- ```{r sample_results} -->
+<!-- # Show some examples -->
+<!-- sample_results <- clean_bib_data %>% -->
+<!--   filter(detected_methods != "") %>% -->
+<!--   select(TITLE, detected_methods, method_confidence) %>% -->
+<!--   head(10) -->
 
-print(sample_results)
-```
+<!-- print(sample_results) -->
+<!-- ``` -->
 
 ## Method Frequency Analysis
 
@@ -284,57 +448,12 @@ print(method_results$counts)
 
 The `method_results` reveal dominant methodological paradigms and identifies less common approaches.
 
-## Value of Information Analysis
+## Papers Summary
 
-We conduct specialized analysis of Value of Information (VOI) literature, examining methodological patterns and temporal trends. 
-
-```{r voi_results_assess}
-source("R/analyze_voi_papers.R")
-# Analyze VOI papers
-voi_results <- analyze_voi_papers(clean_bib_data)
-
-# Access results
-voi_results$summary
-```
-```{r voi_results_methods}
-knitr::kable(voi_results$methods, caption = "Methods in VOI Papers")
-
-```
-
-```{r voi_results_plot}
-voi_results$plot
-```
-
-`analyze_voi_papers` shows the methodological evolution and application contexts specific to VOI.
-
-## Results Export
-
-We compile all classification results into a structured `results_table` and export for external validation and secondary analysis.
-
-```{r results_table}
-# Create a comprehensive results table
-results_table <- clean_bib_data %>%
-  select(
-    TITLE, 
-    YEAR = year,
-    HAS_ANNOTATION = has_annotation,
-    DETECTED_METHODS = detected_methods, 
-    CONFIDENCE = method_confidence,
-    VOI = has_voi,
-    BAYESIAN = has_bayesian,
-    SIMULATION = has_simulation,
-    UNCERTAINTY = has_uncertainty
-  )
-
-# Export for manual verification
-write.csv(results_table, "data/method_detection_results.csv", row.names = FALSE)
-```
-
-## Analysis Summary
-
-We provide a summary of the papers with `summarise` from [@R-dplyr]. 
+Summarize all papers with `summarise` from [@R-dplyr] and print with `knitr` [@R-knitr]. 
 
 ```{r summary_report}
+source("R/add_confidence_scores.R")
 # Create summary report
 summary_stats <- clean_bib_data %>%
   summarise(
@@ -343,12 +462,12 @@ summary_stats <- clean_bib_data %>%
     high_confidence = sum(method_confidence == "high")
   )
 
-knitr::kable(summary_stats, caption = "Analysis Summary")
+knitr::kable(summary_stats, caption = "Summary of papers")
 ```
 
-## Dominant Methodological Approaches
+## Dominant Methods
 
-We identify prevalent methodological approaches using frequency analysis and `tidyr` [@R-tidyr] for data restructuring.
+Count prevalent methods using `count` for frequency analysis and `tidyr` [@R-tidyr] for data restructuring.
 
 ```{r top_methods}
 # Show top methods
@@ -365,7 +484,7 @@ print(top_methods)
 
 ## VOI Method Validation
 
-We examine Value of Information (VOI) papers specifically to assess classification plausibility and confidence distribution within this focused methodological domain.
+Examine Value of Information (VOI) papers specifically to assess classification plausibility and confidence distribution within this focused methodological domain.
 
 ```{r validation_check}
 # Quick validation - check if our detection makes sense
@@ -392,29 +511,138 @@ high_confidence <- clean_bib_data %>%
 print(high_confidence)
 ```
 
-# Interactive Reference Browser
+## Hierarchy of decision intensity
 
-We provide an interactive reference browser using the `DT` package [@R-DT] for easy navigation of the analyzed literature collection.
+Keeney's concept of a "hierarchy of decision intensity" mapped to methodological sophistication in the literature.
 
-```{r datatable_clean_bib_data, include=FALSE}
-# Minimal interactive table
-DT::datatable(
-  clean_bib_data %>%
-    select(
-      Author = AUTHOR,
-      Year = YEAR,
-      Title = TITLE
-    ) %>%
-    arrange(desc(Year), Author),
-  options = list(
-    pageLength = 5,
-    lengthMenu = c(5, 10, 20),
-    dom = 'tip'  # table, info, pagination only
-  ),
-  caption = "Reference List",
-  rownames = FALSE,
-  filter = "none"  # remove filter to save space
+```{r keeney_intensity}
+source("R/detect_application_domains.R")
+source("R/define_keeney_intensity.R")
+source("R/classify_decision_intensity.R")
+source("R/analyze_keeney_pattern.R")
+source("R/run_keeney_analysis.R")
+
+# Ensure all required data is present
+clean_bib_data <- clean_bib_data %>%
+  mutate(
+    full_text = paste(TITLE, ANNOTE, sep = " ")
+  )
+
+# Run the complete analysis
+keeney_results <- run_keeney_analysis(clean_bib_data)
+
+# Display results
+knitr::kable(keeney_results$intensity_stats, 
+             caption = "Distribution of Decision Intensity Levels")
+
+
+```
+plot with `networkD3` [@R-networkD3]. 
+
+## Testing Keeney's Hierarchy of Decision Intensity
+
+Following Keeney's insight that most decisions are "no-brainers" while few require deep analytical support [@keeneyMakingBetterDecision2004b], we classified methodological approaches in our literature by decision intensity:
+
+- **Level 1**: Intuitive decisions (heuristics, rules of thumb)
+- **Level 2**: Simple analysis (basic tools, checklists)  
+- **Level 3**: Structured analysis (systematic frameworks)
+- **Level 4**: Advanced analysis (stochastic, optimization)
+- **Level 5**: Deep uncertainty methods (robust decision making)
+
+Our analysis reveals that `r sum(keeney_results$intensity_stats$keeney_prediction == "High frequency")`% of methodological applications address lower-intensity decisions, supporting Keeney's observation that sophisticated methods are reserved for particularly complex decision contexts.
+
+```{r sankey_intensity}
+# Load necessary libraries
+library(networkD3)
+library(dplyr)
+
+# 1. First, classify the intensity levels
+source("R/classify_decision_intensity.R")
+clean_bib_data <- classify_decision_intensity(clean_bib_data)
+
+# Count papers by method and intensity level
+method_level_counts <- clean_bib_data %>%
+  filter(detected_methods != "" & primary_intensity != "Unclassified") %>%
+  separate_rows(detected_methods, sep = "; ") %>%
+  count(detected_methods, primary_intensity) %>%
+  mutate(
+    intensity_num = case_when(
+      primary_intensity == "Level 1: Intuitive Decisions" ~ 1,
+      primary_intensity == "Level 2: Simple Analysis" ~ 2,
+      primary_intensity == "Level 3: Structured Analysis" ~ 3,
+      primary_intensity == "Level 4: Advanced Analysis" ~ 4,
+      primary_intensity == "Level 5: Deep Uncertainty" ~ 5
+    )
+  ) %>%
+  arrange(intensity_num, detected_methods)
+
+# Create nodes for methods and levels
+method_nodes <- unique(method_level_counts$detected_methods)
+level_nodes <- c("Level 1", "Level 2", "Level 3", "Level 4", "Level 5")
+
+nodes <- data.frame(
+  name = c(method_nodes, level_nodes),
+  node_group = c(rep("method", length(method_nodes)), rep("level", length(level_nodes)))
 )
+
+
+```
+
+```{r plot_sankey}
+source("R/plot_sankey.R")
+# Load the plot_sankey function
+source("R/plot_sankey.R")
+
+# Get your intensity level counts
+level_counts <- clean_bib_data %>%
+  filter(primary_intensity != "Unclassified") %>%
+  count(primary_intensity) %>%
+  mutate(
+    level_num = case_when(
+      primary_intensity == "Level 1: Intuitive Decisions" ~ 1,
+      primary_intensity == "Level 2: Simple Analysis" ~ 2,
+      primary_intensity == "Level 3: Structured Analysis" ~ 3,
+      primary_intensity == "Level 4: Advanced Analysis" ~ 4,
+      primary_intensity == "Level 5: Deep Uncertainty" ~ 5
+    )
+  ) %>%
+  arrange(level_num)
+
+# Prepare data in the EXACT same structure as the working example
+total_papers <- sum(level_counts$n)
+
+# Inputs: Total papers (like "Transfers" + "Referrals" in the example)
+inputs = c(
+  total_papers,  # All papers (like "Transfers")
+  0              # No second input needed (set to 0)
+)
+
+# Losses: The papers at each level (like the drop-offs in the example)
+losses = c(
+  level_counts$n[level_counts$level_num == 1],  # Level 1 papers
+  level_counts$n[level_counts$level_num == 2],  # Level 2 papers  
+  level_counts$n[level_counts$level_num == 3],  # Level 3 papers
+  level_counts$n[level_counts$level_num == 4],  # Level 4 papers
+  level_counts$n[level_counts$level_num == 5]   # Level 5 papers
+)
+
+# Unit
+unit = "Papers"
+
+# Labels for each stage (matching the structure of the working example)
+labels = c(
+  "All Papers",
+  " ",  # Empty for the second input (since we set it to 0)
+  "Level 1\nIntuitive",
+  "Level 2\nSimple", 
+  "Level 3\nStructured",
+  "Level 4\nAdvanced", 
+  "Level 5\nDeep Uncertainty"
+)
+
+# Create the Sankey diagram
+plot_sankey(inputs, losses, unit, labels)
+
 ```
 
 ```{r child="References.Rmd"}
