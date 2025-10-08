@@ -63,3 +63,87 @@ CABI - 13 results
 
 Decision + Intervention OR policy + Uncertainty + Expert OR stakeholder + Model OR "monte carlo" OR simulation OR "computer assisted" + "value of information" OR "information accuracy"
 
+# Data Import and Preprocessing
+
+## Reading Bibliographic Data
+
+We import bibliographic records using the `bib2df` package [@R-bib2df], converting our BibTeX file into a structured data frame for systematic processing.
+
+```{r read_data, echo=TRUE}
+# Read the bib file
+bib_data <- bib2df::bib2df("bib/23_Methods_Review_Holistic_Systems.bib")
+```
+
+Our BibTeX contains (n = `r nrow(bib_data)`) citations.
+
+## Data Cleaning and Feature Engineering
+
+We prepare the data using `dplyr` [@R-dplyr], for annotation tracking and text consolidation.
+
+```{r clean_data, echo=TRUE}
+# Basic cleaning and text preparation
+clean_bib_data <- bib_data %>%
+  dplyr::mutate(
+    has_annotation = !is.na(ANNOTE) & ANNOTE != "",
+    annotation_text = ifelse(has_annotation, ANNOTE, ""),
+    full_text = paste(TITLE, ANNOTE, sep = " "),
+    year = as.numeric(YEAR)
+  )
+```
+
+(`r sum(clean_bib_data$has_annotation)` of the citations have annotations.
+
+```{r clean_bib_data}
+# Apply manual classifications from Zotero keywords
+source("R/classify_papers.R")
+clean_bib_data <- classify_papers(clean_bib_data)
+
+# Summary of manual classifications
+manual_summary <- clean_bib_data %>%
+  count(manual_classification, manual_reason)
+
+knitr::kable(manual_summary, caption = "Manual Classification Summary")
+```
+
+<!-- ```{r apply_exclusion_rules} -->
+<!-- source("R/apply_exclusion_rules.R") -->
+<!-- # Apply exclusion rules -->
+<!-- clean_bib_data <- apply_exclusion_rules(clean_bib_data) -->
+<!-- ``` -->
+
+## Run PRISMA Pipeline
+
+```{r prisma_pipeline}
+source("R/run_prisma_pipeline.R")
+
+  # Load all steps
+  source("R/prisma_config.R")
+  source("R/identify_duplicates.R")
+  source("R/apply_manual_classifications.R") 
+  source("R/automated_exclusions.R")
+  source("R/final_classification.R")
+  source("R/generate_prisma_stats.R")
+  source("R/export_results.R")
+  source("R/prisma_flow_output.R")
+
+# Run the complete PRISMA pipeline
+prisma_results <- run_prisma_pipeline(clean_bib_data)
+
+# Access results
+prisma_results$statistics
+prisma_results$export_files$included_count
+prisma_results$export_files$excluded_count
+```
+
+<!-- ```{r validate_manual_decisions} -->
+<!-- # 1. Apply classifications first -->
+<!-- source("R/apply_manual_classifications.R") -->
+<!-- source("R/apply_final_classification.R") -->
+
+<!-- clean_bib_data <- apply_manual_classifications(clean_bib_data) -->
+<!-- clean_bib_data <- apply_final_classification(clean_bib_data) -->
+
+<!-- # 2. Now run validation -->
+<!-- source("R/validate_manual_decisions.R") -->
+<!-- validation_results <- validate_manual_decisions(clean_bib_data) -->
+<!-- ``` -->
