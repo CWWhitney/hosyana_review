@@ -1,53 +1,51 @@
-# Function to apply automated exclusion rules
-apply_exclusion_rules <- function(data) {
-  
-  # Check if LANGUAGE column exists and handle safely
-  has_language_column <- "LANGUAGE" %in% names(data)
-  
-  data %>%
+apply_exclusion_rules <- function(bib_data) {
+  bib_data %>%
     mutate(
-      # Rule 1: Document type exclusions
-      exclude_document_type = case_when(
-        str_detect(tolower(TITLE), "annual report|syllabus|catalog|course notes") ~ TRUE,
-        str_detect(tolower(TITLE), "legal document|law review") ~ TRUE,
-        str_detect(tolower(TITLE), "preprint|thesis") & 
-          !is.na(JOURNAL) ~ TRUE,
+      # Document type exclusions (specific patterns)
+      exclude_doc_type = str_detect(tolower(TITLE), 
+                                    "annual report|syllabus|catalog|course notes|legal document|bibliography collection"),
+      
+      # # Language exclusion - only if we have the field
+      # exclude_language = ifelse("LANGUAGE" %in% names(bib_data),
+      #                           !is.na(LANGUAGE) & tolower(LANGUAGE) != "english",
+      #                           FALSE),
+      
+      # Scientific content check (be more specific)
+      exclude_non_scientific = case_when(
+        !is.na(JOURNAL) & str_detect(tolower(JOURNAL), 
+                                     "legal review|law journal|news|magazine|newspaper") ~ TRUE,
+        str_detect(tolower(TITLE), "^news:|^magazine:|^blog:|newspaper article") ~ TRUE,
         TRUE ~ FALSE
       ),
       
-      # Rule 2: Language exclusion - fixed vectorization
-      exclude_language = if(has_language_column) {
-        !is.na(LANGUAGE) & tolower(LANGUAGE) != "english"
-      } else {
-        rep(FALSE, n())  # Return FALSE for all rows if no LANGUAGE column
-      },
+      # Preprint handling - only exclude if we're confident it's a duplicate
+      exclude_preprint = case_when(
+        !is.na(JOURNAL) & str_detect(tolower(JOURNAL), "arxiv|preprint|biorxiv|medrxiv") & 
+          !is.na(PUBLISHER) & str_detect(tolower(PUBLISHER), "elsevier|springer|wiley|taylor") ~ TRUE,
+        TRUE ~ FALSE
+      ),
       
-      # Rule 3: Content relevance
+      # Content relevance - be more inclusive, focus on clear exclusions
       exclude_content = case_when(
-        !str_detect(tolower(TITLE), "decision|model|analysis|support") ~ TRUE,
-        str_detect(tolower(TITLE), "bibliography collection|duplicate") ~ TRUE,
+        # Only exclude if clearly not decision-related
+        str_detect(tolower(TITLE), "chemistry experiment|physics lab|pure mathematics|organic synthesis") ~ TRUE,
+        # Keep anything that might be decision-related
+        str_detect(tolower(TITLE), "decision|choice|select|evaluate|assess|analyze|model|uncertain|risk") ~ FALSE,
+        # Default to include for systematic review
         TRUE ~ FALSE
       ),
       
       # Combined automated exclusion
-      automated_exclude = exclude_document_type | exclude_language | exclude_content,
+      automated_exclude = exclude_doc_type | #exclude_language | 
+        exclude_non_scientific | exclude_preprint | exclude_content,
       
-      # Final classification
-      final_classification = case_when(
-        manual_classification == "exclude" ~ "exclude",
-        manual_classification == "include" ~ "include", 
-        automated_exclude ~ "exclude",
-        TRUE ~ "unclassified"
-      ),
-      
-      # Reason for automated decisions
-      exclusion_reason = case_when(
-        manual_classification == "exclude" ~ manual_reason,
-        exclude_document_type ~ "Invalid document type",
-        exclude_language ~ "Non-English publication",
-        exclude_content ~ "Irrelevant content", 
-        manual_classification == "include" ~ manual_reason,
-        TRUE ~ "Pending review"
+      automated_reason = case_when(
+        exclude_doc_type ~ "invalid_document_type",
+       # exclude_language ~ "non_english",
+        exclude_non_scientific ~ "non_scientific",
+        exclude_preprint ~ "preprint_with_published_version", 
+        exclude_content ~ "irrelevant_content",
+        TRUE ~ "not_excluded"
       )
     )
 }
