@@ -15,7 +15,7 @@ output:
     df_print: kable
 ---
 
-```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+```{r knitr_setup, include=FALSE, message=FALSE, warning=FALSE}
 
 # Global knitr options
 knitr::opts_chunk$set(
@@ -50,16 +50,21 @@ suppressPackageStartupMessages({
   library(ggplot2)       # Data visualization
   library(scales)        # Plot scales
   library(kableExtra)    # Enhanced tables
+  library(knitr)
   library(DT)            # Interactive tables
   library(ggthemes)      # Additional ggplot themes
 })
 
 # Generate bibliography for all used packages
 packages_to_cite <- c("bib2df", 
-                      "dplyr", "tidyr", 
-                      "stringr", "purrr", 
+                      "dplyr", 
+                      "tidyr", 
+                      "stringr", 
+                      "purrr", 
                       "ggplot2", 
-                     "knitr", "bookdown", "DT")
+                     "knitr", 
+                     "bookdown", 
+                     "DT")
 knitr::write_bib(packages_to_cite, "bib/packages.bib")
 
 # Set ggplot theme for consistent styling
@@ -93,132 +98,6 @@ method_colors <- c(
 ```
 
 ```{r child = "01_1_Review_and_Synthesis.rmd"}
-```
-
-# Data Import and Preprocessing
-
-## Reading Bibliographic Data
-
-We import bibliographic records using the `bib2df` package [@R-bib2df], converting our BibTeX file into a structured data frame for systematic processing.
-
-```{r read_data, echo=TRUE}
-# Read the bib file
-bib_data <- bib2df::bib2df("bib/23_Methods_Review_Holistic_Systems.bib")
-```
-
-Our BibTeX contains (n = `r nrow(bib_data)`) citations.
-
-## Data Cleaning and Feature Engineering
-
-We prepare the data using `dplyr` [@R-dplyr], for annotation tracking and text consolidation.
-
-```{r clean_data, echo=TRUE}
-# Basic cleaning and text preparation
-clean_bib_data <- bib_data %>%
-  dplyr::mutate(
-    has_annotation = !is.na(ANNOTE) & ANNOTE != "",
-    annotation_text = ifelse(has_annotation, ANNOTE, ""),
-    full_text = paste(TITLE, ANNOTE, sep = " "),
-    year = as.numeric(YEAR)
-  )
-```
-
-(`r sum(clean_bib_data$has_annotation)` of the citations have annotations.
-
-```{r clean_bib_data}
-# Apply manual classifications from Zotero keywords
-source("R/classify_papers.R")
-clean_bib_data <- classify_papers(clean_bib_data)
-
-# Summary of manual classifications
-manual_summary <- clean_bib_data %>%
-  count(manual_classification, manual_reason)
-
-knitr::kable(manual_summary, caption = "Manual Classification Summary")
-```
-
-```{r}
-# Function to apply automated exclusion rules
-apply_exclusion_rules <- function(data) {
-  
-  # Check if LANGUAGE column exists and handle safely
-  has_language_column <- "LANGUAGE" %in% names(data)
-  
-  data %>%
-    mutate(
-      # Rule 1: Document type exclusions
-      exclude_document_type = case_when(
-        str_detect(tolower(TITLE), "annual report|syllabus|catalog|course notes") ~ TRUE,
-        str_detect(tolower(TITLE), "legal document|law review") ~ TRUE,
-        str_detect(tolower(TITLE), "preprint|thesis") & 
-          !is.na(JOURNAL) ~ TRUE,
-        TRUE ~ FALSE
-      ),
-      
-      # Rule 2: Language exclusion - fixed vectorization
-      exclude_language = if(has_language_column) {
-        !is.na(LANGUAGE) & tolower(LANGUAGE) != "english"
-      } else {
-        rep(FALSE, n())  # Return FALSE for all rows if no LANGUAGE column
-      },
-      
-      # Rule 3: Content relevance
-      exclude_content = case_when(
-        !str_detect(tolower(TITLE), "decision|model|analysis|support") ~ TRUE,
-        str_detect(tolower(TITLE), "bibliography collection|duplicate") ~ TRUE,
-        TRUE ~ FALSE
-      ),
-      
-      # Combined automated exclusion
-      automated_exclude = exclude_document_type | exclude_language | exclude_content,
-      
-      # Final classification
-      final_classification = case_when(
-        manual_classification == "exclude" ~ "exclude",
-        manual_classification == "include" ~ "include", 
-        automated_exclude ~ "exclude",
-        TRUE ~ "unclassified"
-      ),
-      
-      # Reason for automated decisions
-      exclusion_reason = case_when(
-        manual_classification == "exclude" ~ manual_reason,
-        exclude_document_type ~ "Invalid document type",
-        exclude_language ~ "Non-English publication",
-        exclude_content ~ "Irrelevant content", 
-        manual_classification == "include" ~ manual_reason,
-        TRUE ~ "Pending review"
-      )
-    )
-}
-
-# Apply exclusion rules
-clean_bib_data <- apply_exclusion_rules(clean_bib_data)
-```
-
-
-## Run PRISMA Pipeline
-
-```{r prisma_pipeline}
-source("R/run_prisma_pipeline.R")
-
-  # Load all steps
-  source("R/prisma_config.R")
-  source("R/identify_duplicates.R")
-  source("R/manual_classifications.R") 
-  source("R/automated_exclusions.R")
-  source("R/final_classification.R")
-  source("R/prisma_stats.R")
-  source("R/export_results.R")
-  source("R/prisma_flow_output.R")
-
-# Run the complete PRISMA pipeline
-prisma_results <- run_prisma_pipeline(clean_bib_data)
-
-# Access results
-prisma_results$statistics
-prisma_results$export_files$included_count
-prisma_results$export_files$excluded_count
 ```
 
 ## Method Term Discovery
@@ -336,7 +215,7 @@ method_categories <- list(
 )
 ```
 
-## Automated Method Detection
+# Automated Method Detection
 
 We apply automated classification using a custom dictionary-based algorithm (`detect_methods.R`) that identifies methodological approaches from text content. The `purrr` package [@R-purrr] enables efficient vectorized processing across all records. Our dual detection (full text and titles only) enables confidence scoring, where methods appearing in titles receive higher reliability weights for subsequent analysis.
 
@@ -500,7 +379,7 @@ print(validation_check)
 
 `validation_check` ensures classification accuracy.
 
-## High-Reliability Classifications
+# High-Reliability Classifications
 
 We examine the subset of classifications receiving the highest confidence rating, where methods were detected in both titles and full text.
 
@@ -513,11 +392,11 @@ high_confidence <- clean_bib_data %>%
 print(high_confidence)
 ```
 
-## Interactive Reference Browser
+# Interactive Reference Browser
 
 We provide an interactive reference browser using the `DT` package [@R-DT] for easy navigation of the analyzed literature collection.
 
-```{r datatable_clean_bib_data}
+```{r datatable_clean_bib_data, include=FALSE}
 # Minimal interactive table
 DT::datatable(
   clean_bib_data %>%
