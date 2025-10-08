@@ -1,8 +1,3 @@
-# Load required packages
-library(dplyr)
-library(stringr)
-library(purrr)
-
 # Function to classify papers based on keywords
 classify_papers <- function(bib_data) {
   bib_data %>%
