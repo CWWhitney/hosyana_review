@@ -2,7 +2,7 @@
 
 Interactive reference browser of the full literature collection with the `DT` package [@R-DT].
 
-```{r datatable_clean_bib_data, include=FALSE}
+```{r datatable_clean_bib_data, echo=FALSE}
 # Minimal interactive table
 DT::datatable(
   clean_bib_data %>%

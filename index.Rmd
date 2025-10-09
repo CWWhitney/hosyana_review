@@ -6,6 +6,7 @@ bibliography:
   - bib/01_introduction.bib
   - bib/01_1_review_synthesis.bib
   - bib/packages.bib
+  - bib/23_Methods_Review_Holistic_Systems.bib
 output: 
   html_document:
     toc: true
@@ -221,7 +222,7 @@ prisma_results$export_files$excluded_count
 
 Validate manual classification accuracy using `validate_manual_decisions`, with `dplyr` [@R-dplyr] to verify that 'bin' papers are excluded and 'read' papers are included as intended.
 
-```{r validate_manual_decisions, include=FALSE}
+```{r validate_manual_decisions, echo=FALSE}
 source("R/validate_manual_decisions.R")
 
 # Step 1: Run all classification steps first
@@ -245,7 +246,7 @@ if(validation_results$read_papers_incorrectly_excluded == 0 &
 
 ```
 
-Our procedures excluded 
+Our automated procedures excluded several additional papers
 
 - Non-scientific articles and reports (`r prisma_results$step_counts$excluded_non_scientific` excluded)
 - Inappropriate document types: annual reports, syllabus, course notes (`r prisma_results$step_counts$excluded_doc_type` excluded),
@@ -255,7 +256,7 @@ Our procedures excluded
 
 **Note:** We did not exclude based on content relevance to ensure comprehensive method coverage, resulting in `r prisma_results$step_counts$final_included` papers for analysis.
 
-# Method extraction
+# Method Extraction and Synthesis
 
 We use Keeney’s representation of where formal decision support is required and applied as motivation and framework for the assessment - Keeney’s judgment about how 10,000 decisions are typically made - his personal histogram of 10,000 decisions being faced by numerous decision makers [@keeneyMakingBetterDecision2004b].
 
@@ -332,7 +333,7 @@ method_sentences <- all_text_data %>%
   sample_n(10)  # Sample for review
 ```
 
-## Sample Sentences Containing method Terms
+## Sample Sentences Containing Method Terms
 
 ```{r display_method_context, echo=FALSE}
 knitr::kable(
@@ -377,6 +378,136 @@ method_categories <- list(
   risk_analysis = c("risk analysis", "risk assessment", "sensitivity analysis", "uncertainty analysis")
 )
 ```
+
+
+##################
+
+```{r}
+# Ensure method detection has been run
+if(!"detected_methods" %in% names(clean_bib_data)) {
+  source("R/detect_methods.R")
+  clean_bib_data <- clean_bib_data %>%
+    mutate(
+      detected_methods = map_chr(full_text, detect_methods)
+    )
+}
+```
+
+# Create qualitative data
+
+```{r}
+# Create qualitative data with only existing columns
+qualitative_data <- clean_bib_data %>%
+  filter(final_decision == "include") %>%  # Only included papers
+  mutate(
+    # Combine all relevant text fields that exist
+    full_content = paste(
+      ifelse(!is.na(TITLE), paste("TITLE:", TITLE), ""),
+      ifelse("ABSTRACT" %in% names(.) & !is.na(ABSTRACT), paste("ABSTRACT:", ABSTRACT), ""),
+      ifelse("KEYWORDS" %in% names(.) & !is.na(KEYWORDS), paste("KEYWORDS:", KEYWORDS), ""),
+      ifelse("ANNOTE" %in% names(.) & !is.na(ANNOTE), paste("ANNOTATION:", ANNOTE), ""),
+      sep = "\n\n"
+    )
+  ) %>%
+  select(BIBTEXKEY, TITLE, full_content)
+
+# Extract method content from available text
+method_sentences_comprehensive <- qualitative_data %>%
+  unnest_tokens(sentence, full_content, token = "sentences") %>%
+  filter(str_detect(tolower(sentence), 
+                   "method|approach|technique|model|framework|analysis|algorithm")) %>%
+  mutate(
+    sentence_length = nchar(sentence),
+    # Categorize by method focus
+    method_focus = case_when(
+      str_detect(tolower(sentence), "bayesian|prior|posterior") ~ "Bayesian",
+      str_detect(tolower(sentence), "simulation|monte carlo|stochastic") ~ "Simulation",
+      str_detect(tolower(sentence), "optimization|linear programming") ~ "Optimization",
+      str_detect(tolower(sentence), "decision.*tree|value.*information") ~ "Decision Analysis",
+      str_detect(tolower(sentence), "machine learning|neural network") ~ "Machine Learning",
+      TRUE ~ "General Methodology"
+    )
+  )
+```
+
+# Summary of methods
+
+```{r}
+# Summary of method themes
+method_themes <- method_sentences_comprehensive %>%
+  count(method_focus, sort = TRUE) %>%
+  mutate(percentage = n / n() * 100)
+
+knitr::kable(method_themes, 
+             caption = "Bibliographic Assessment: method Themes in Literature",
+             col.names = c("method Focus", "Count", "Percentage"))
+```
+
+# Generate synthesis insights
+
+```{r}
+# Generate synthesis insights from our PRISMA results
+synthesis_insights <- list(
+  total_papers_analyzed = prisma_results$step_counts$final_included,
+  papers_for_qualitative = prisma_results$statistics$included$qualitative_synthesis,
+  papers_for_quantitative = prisma_results$statistics$included$quantitative_assessment,
+  method_sentences = nrow(method_sentences_comprehensive),
+  dominant_methods = method_themes %>% head(3) %>% pull(method_focus)
+)
+
+# Display synthesis summary
+cat("## Qualitative Synthesis: Bibliographic Assessment\n\n")
+cat("**Quantitative Analysis:**", synthesis_insights$papers_for_quantitative, "papers\n")
+cat("**Qualitative Synthesis:**", synthesis_insights$papers_for_qualitative, "manually reviewed papers\n")
+cat("**method Content:**", synthesis_insights$method_sentences, "sentences describing methods\n")
+cat("**Dominant method Themes:**", paste(synthesis_insights$dominant_methods, collapse = ", "), "\n")
+
+```
+# Show method descriptions
+
+```{r}
+# Show rich method descriptions
+rich_method_descriptions <- method_sentences_comprehensive %>%
+  filter(sentence_length > 50 & sentence_length < 300) %>%
+  filter(!str_detect(tolower(sentence), "abstract|keyword|title")) %>%
+  group_by(method_focus) %>%
+  sample_n(min(2, n())) %>%
+  ungroup() %>%
+  select(Method_Type = method_focus, Description = sentence)
+
+knitr::kable(rich_method_descriptions,
+             caption = "Qualitative Synthesis: method Context Examples")
+```
+
+```{r}
+# Export as CSV with BibTeX references for easy analysis
+export_qualitative_csv <- function(method_sentences, output_file = "data/qualitative_synthesis.csv") {
+  
+  # Create export data frame
+  export_data <- method_sentences %>%
+    mutate(
+      bib_reference = paste("[@", BIBTEXKEY, "]", sep = ""),
+      full_sentence_with_ref = paste(sentence, bib_reference)
+    ) %>%
+    select(BIBTEXKEY, TITLE, method_focus, sentence_length, 
+           full_sentence_with_ref, sentence, bib_reference)
+  
+  write.csv(export_data, output_file, row.names = FALSE)
+  cat("Qualitative data with references exported to:", output_file, "\n")
+  return(export_data)
+}
+
+# Run CSV export
+csv_export <- export_qualitative_csv(method_sentences_comprehensive)
+```
+
+```{r}
+```
+
+#################
+#################
+#################
+#################
 
 # Automated Method Detection
 
@@ -586,7 +717,7 @@ nodes <- data.frame(
 ```{r plot_sankey}
 source("R/plot_sankey.R")
 
-# Get your intensity level counts
+# Get our intensity level counts
 level_counts <- clean_bib_data %>%
   filter(primary_intensity != "Unclassified") %>%
   count(primary_intensity) %>%
