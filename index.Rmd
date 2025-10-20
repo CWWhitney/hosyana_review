@@ -278,26 +278,6 @@ knitr::kable(
 )
 ```
 
-
-```{r bigram_analysis, echo=TRUE}
-# Analyze multi-word method terms using n-grams
-method_bigrams_comprehensive <- all_text_data %>%
-  select(combined_text) %>%
-  unnest_tokens(bigram, combined_text, token = "ngrams", n = 2) %>%
-  count(bigram, sort = TRUE) %>%
-  filter(n > 2)  # Keep only terms appearing multiple times
-```
-
-
-```{r display_bigrams, echo=FALSE}
-knitr::kable(
-  method_bigrams_comprehensive %>% head(20),
-  caption = "Top 20 Most Frequent Bigrams (Two-Word Terms)",
-  col.names = c("Bigram", "Frequency")
-)
-```
-
-
 ```{r method_pattern_analysis, echo=TRUE}
 # Use pattern matching to find potential method terms in context
 method_patterns <- c(
