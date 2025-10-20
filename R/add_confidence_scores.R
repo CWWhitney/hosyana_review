@@ -22,5 +22,3 @@ add_confidence_scores <- function(data) {
                                    "\\buncertainty|\\bprobabilistic|\\bsensitivity|\\brisk\\b")
     )
 }
-
-clean_bib_data <- add_confidence_scores(clean_bib_data)
