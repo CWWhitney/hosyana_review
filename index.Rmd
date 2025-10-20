@@ -85,158 +85,6 @@ knitr::write_bib(packages_to_cite, "bib/packages.bib")
 ```{r child="02_Review.Rmd"}
 ```
 
-# Data Import and Preprocessing
-
-## Bibliographic Data
-
-Import bibliographic records using the `bib2df` and `qs` package [@R-bib2df' @R-qs], converting our BibTeX file into a structured data frame for systematic processing.
-
-```{r read_data, echo=TRUE}
-# Read the bib file
-library(bib2df)
-library(qs) 
-
-bib_file <- "bib/23_Methods_Review_Holistic_Systems.bib"
-cache_file <- "bib/bib_data_cache.qs"
-
-if (file.exists(cache_file)) {
-  bib_data <- qs::qread(cache_file)
-  cat("Loaded from qs cache\n")
-} else {
-  bib_data <- bib2df::bib2df(bib_file)
-  qs::qsave(bib_data, cache_file)
-  cat("Created qs cache\n")
-}
-
-```
-
-Our BibTeX contains (n = `r nrow(bib_data)`) citations.
-
-## BibTeX Cleaning
-
-We prepare the BibTeX file using `dplyr` [@R-dplyr], for annotation tracking and text consolidation.
-
-```{r clean_data, echo=TRUE}
-# Basic cleaning and text preparation
-clean_bib_data <- bib_data %>%
-  dplyr::mutate(
-    has_annotation = !is.na(ANNOTE) & ANNOTE != "",
-    annotation_text = ifelse(has_annotation, ANNOTE, ""),
-    full_text = paste(TITLE, ANNOTE, sep = " "),
-    year = as.numeric(YEAR)
-  )
-```
-
-`r sum(clean_bib_data$has_annotation)` of the citations have annotations.
-
-Use dplyr `count` [@R-dplyr] and knitr `kable` [@R-knitr] for a clean bib file. 
-
-```{r clean_bib_data}
-# Apply manual classifications from Zotero keywords
-source("R/classify_papers.R")
-clean_bib_data <- classify_papers(clean_bib_data)
-
-# Summary of manual classifications
-manual_summary <- clean_bib_data %>%
-  dplyr::count(manual_classification, manual_reason)
-
-knitr::kable(manual_summary, caption = "Manual Classification Summary")
-```
-
-Verify the manual review steps with automated exclusion rules using the `apply_exclusion_rules` function. The function uses `dplyr` for data manipulation with `case_when` and `mutate` [@R-dplyr], the `magrittr` pipe operator `%>%` [@R-magrittr], and `stringr` for pattern matching with `str_detect` [@R-stringr]. The rules implement our PRISMA exclusion criteria by detecting inappropriate document types, non-English content, and clearly irrelevant papers through text pattern matching in titles and metadata.
-
-```{r apply_exclusion_rules}
-source("R/apply_exclusion_rules.R")
-# Apply exclusion rules
-clean_bib_data <- apply_exclusion_rules(clean_bib_data)
-```
-
-The cleaned bib file contains (n = `r nrow(clean_bib_data)`) citations.
-
-## Run PRISMA Pipeline
-
-Define PRISMA exclusion criteria in the `prisma_config` function, using base R [@R-base] to create organized lists of exclusion patterns for duplicates, document types, languages, and irrelevant content. 
-
-```{r prisma_config}
- source("R/prisma_config.R")
-```
-
-Detect duplicates with `identify_duplicates`, using `dplyr` [@R-dplyr] and base R duplicate detection [@R-base] to find both title-based and DOI-based duplicates through text normalization and exact matching.
-
-```{r identify_duplicates}
- source("R/identify_duplicates.R")
-```
-
-Apply manual classifications from bib keywords using `apply_manual_classifications`, with `dplyr` [@R-dplyr] and `stringr` [@R-stringr] to identify papers that we manually marked 'bin' for exclusion or 'read' for inclusion.
-
-```{r apply_manual_classifications}
-  source("R/apply_manual_classifications.R") 
-```
-
-Apply final classification decisions using `apply_final_classification`, with `dplyr` [@R-dplyr] to prioritize manual classifications over automated rules and resolve paper inclusion status.
-
-```{r apply_final_classification}
-   source("R/apply_final_classification.R")
-```
-
-Generate PRISMA flow statistics using `generate_prisma_stats`, with `dplyr` [@R-dplyr] to calculate counts and percentages for each exclusion and inclusion category.
-
-```{r generate_prisma_stats}
-   source("R/generate_prisma_stats.R")
-```
-
-Export PRISMA results using `export_prisma_results`, with `bib2df` [@R-bib2df] to create separate BibTeX files for included and excluded papers.
-
-```{r export_prisma_results}
-  source("R/export_prisma_results.R")
-```
-
-Generate PRISMA flow output using `generate_prisma_flow_output`, with base R [@R-base] to format statistics for the systematic review flow diagram.
-
-```{r generate_prisma_flow_output}
-   source("R/generate_prisma_flow_output.R")
-```
-
-Execute the complete PRISMA pipeline using `run_prisma_pipeline`, orchestrating all classification, exclusion, and export steps to generate final systematic review results.
-
-```{r run_prisma_pipeline}
-source("R/run_prisma_pipeline.R")
-
-# Run the complete PRISMA pipeline
-prisma_results <- run_prisma_pipeline(clean_bib_data)
-
-# Access results
-prisma_results$statistics
-prisma_results$export_files$included_count
-
-clean_bib_data_prisma <- prisma_results$classified_data
-```
-
-Validate manual classification accuracy using `validate_manual_decisions`, with `dplyr` [@R-dplyr] to verify that 'bin' papers are excluded and 'read' papers are included as intended.
-
-```{r validate_manual_decisions, echo=FALSE}
-source("R/validate_manual_decisions.R")
-
-# Step 1: Run all classification steps first
-clean_bib_data_prisma <- identify_duplicates(clean_bib_data_prisma)
-clean_bib_data_prisma <- apply_manual_classifications(clean_bib_data_prisma)
-clean_bib_data_prisma <- apply_exclusion_rules(clean_bib_data_prisma)
-clean_bib_data_prisma <- apply_final_classification(clean_bib_data_prisma)  # This creates final_decision
-
-# Step 2: Now run validation (final_decision exists now)
-validation_results <- validate_manual_decisions(clean_bib_data_prisma)
-
-
-if(validation_results$read_papers_incorrectly_excluded == 0 & 
-   validation_results$bin_papers_incorrectly_included == 0) {
-  cat("Validation PASSED: All manual classifications respected\n")
-  cat("   -", validation_results$read_papers_total, "read papers correctly included\n")
-} else {
-  cat("Validation FAILED: Manual classification errors detected\n")
-}
-
-```
-
 # Method Extraction and Synthesis
 
 We use Keeney’s representation of where formal decision support is required and applied as motivation and framework for the assessment - Keeney’s judgment about how 10,000 decisions are typically made - his personal histogram of 10,000 decisions being faced by numerous decision makers [@keeneyMakingBetterDecision2004b].
@@ -278,6 +126,8 @@ knitr::kable(
 )
 ```
 
+## Use pattern matching to find potential method terms in context
+
 ```{r method_pattern_analysis, echo=TRUE}
 # Use pattern matching to find potential method terms in context
 method_patterns <- c(
@@ -302,31 +152,10 @@ knitr::kable(
 )
 ```
 
-```{r keyword_analysis, echo=TRUE}
-# Specifically analyze author-provided keywords
-if("KEYWORDS" %in% names(clean_bib_data)) {
-  keyword_analysis <- clean_bib_data %>%
-    filter(!is.na(KEYWORDS)) %>%
-    select(KEYWORDS) %>%
-    unnest_tokens(keyword, KEYWORDS, token = "regex", pattern = ";|,") %>%
-    mutate(keyword = str_trim(tolower(keyword))) %>%
-    count(keyword, sort = TRUE) %>%
-    filter(n > 1, nchar(keyword) > 2)
-}
-```
-
-```{r display_keywords, echo=FALSE}
-if(exists("keyword_analysis")) {
-  knitr::kable(
-    keyword_analysis %>% head(20),
-    caption = "Top 20 Author-Provided Keywords",
-    col.names = c("Keyword", "Frequency")
-  )
-}
-```
+# Method categories
 
 ```{r method_categories}
-# method categories
+# Method categories
 method_categories <- list(
   bayesian = c("bayesian", "bayes", "mcmc", "markov chain", "prior", "posterior"),
   simulation = c("simulation", "monte carlo", "stochastic", "agent-based", "discrete event"),
@@ -340,23 +169,42 @@ method_categories <- list(
 )
 ```
 
-```{r}
-# Ensure method detection has been run
-if(!"detected_methods" %in% names(clean_bib_data)) {
-  source("R/detect_methods.R")
-  clean_bib_data <- clean_bib_data %>%
-    mutate(
-      detected_methods = map_chr(full_text, detect_methods)
-    )
-}
+# Automated Method Detection
+
+Apply automated classification using a custom dictionary-based algorithm `detect_methods.R` identifying methods from text content with `purrr` package [@R-purrr]. Methods appearing in titles receive higher reliability weights for subsequent analysis.
+
+```{r detect_methods}
+source("R/detect_methods.R")
+# Apply method detection
+clean_bib_data_prisma <- clean_bib_data_prisma %>%
+  mutate(
+    detected_methods = map_chr(full_text, detect_methods),
+    methods_from_title = map_chr(TITLE, detect_methods)
+  )
 ```
 
-# Create qualitative data
 
-```{r}
+## Create qualitative data
+
+```{r clean_bib_data_prisma}
+# Apply method detection to the properly filtered data
+clean_bib_data_prisma <- clean_bib_data_prisma %>%
+  mutate(
+    detected_methods = map_chr(full_text, detect_methods),
+    methods_from_title = map_chr(TITLE, detect_methods)
+  )
+
+# Check the results
+table(clean_bib_data_prisma$detected_methods != "")
+
+# Ensure full_text exists in the filtered data
+if(!"full_text" %in% names(prisma_filtered_data)) {
+  prisma_filtered_data <- prisma_filtered_data %>%
+    mutate(full_text = paste(TITLE, ANNOTE, sep = " "))
+}
+
 # Create qualitative data with only existing columns
-qualitative_data <- clean_bib_data %>%
-  filter(final_decision == "include") %>%  # Only included papers
+qualitative_data <- clean_bib_data_prisma %>%
   mutate(
     # Combine all relevant text fields that exist
     full_content = paste(
@@ -421,6 +269,7 @@ cat("**method Content:**", synthesis_insights$method_sentences, "sentences descr
 cat("**Dominant method Themes:**", paste(synthesis_insights$dominant_methods, collapse = ", "), "\n")
 
 ```
+
 # Show method descriptions
 
 ```{r}
@@ -436,6 +285,10 @@ rich_method_descriptions <- method_sentences_comprehensive %>%
 knitr::kable(rich_method_descriptions,
              caption = "Qualitative Synthesis: method Context Examples")
 ```
+
+# Export qualiatative data
+
+Keep as CSV with BibTeX references for further analysis. 
 
 ```{r}
 # Export as CSV with BibTeX references for easy analysis
@@ -460,60 +313,6 @@ csv_export <- export_qualitative_csv(method_sentences_comprehensive)
 ```
 
 
-# Automated Method Detection
-
-Apply automated classification using a custom dictionary-based algorithm `detect_methods.R` identifying methods from text content with `purrr` package [@R-purrr]. Methods appearing in titles receive higher reliability weights for subsequent analysis.
-
-```{r detect_methods}
-source("R/detect_methods.R")
-# Apply method detection
-clean_bib_data <- clean_bib_data %>%
-  mutate(
-    detected_methods = map_chr(full_text, detect_methods),
-    methods_from_title = map_chr(TITLE, detect_methods)
-  )
-```
-
-<!-- ## Method Detection Validation -->
-
-<!-- Validate the automated classification with metrics including detection rates and confidence level distribution.  -->
-
-<!-- ```{r method_detection_check_clean, echo=FALSE} -->
-<!-- # Create a clean summary table -->
-<!-- detection_summary <- data.frame( -->
-<!--   Metric = c("Total papers",  -->
-<!--              "Papers with methods detected",  -->
-<!--              "Papers with VOI", -->
-<!--              "High confidence classifications", -->
-<!--              "Medium confidence classifications", -->
-<!--              "Low confidence classifications"), -->
-<!--   Count = c(nrow(clean_bib_data), -->
-<!--             sum(clean_bib_data$detected_methods != ""), -->
-<!--             sum(clean_bib_data$has_voi), -->
-<!--             sum(clean_bib_data$method_confidence == "high"), -->
-<!--             sum(clean_bib_data$method_confidence == "medium"),  -->
-<!--             sum(clean_bib_data$method_confidence == "low")) -->
-<!-- ) -->
-
-<!-- knitr::kable(detection_summary,  -->
-<!--              caption = "Method Detection Summary Statistics", -->
-<!--              col.names = c("Metric", "Count")) -->
-<!-- ``` -->
-
-<!-- ## Classification Examples -->
-
-<!-- We display representative examples of automated method classifications to illustrate detection accuracy and confidence assignment.  -->
-
-<!-- ```{r sample_results} -->
-<!-- # Show some examples -->
-<!-- sample_results <- clean_bib_data %>% -->
-<!--   filter(detected_methods != "") %>% -->
-<!--   select(TITLE, detected_methods, method_confidence) %>% -->
-<!--   head(10) -->
-
-<!-- print(sample_results) -->
-<!-- ``` -->
-
 ## Method Frequency Analysis
 
 Quantify and visualize the distribution of methods in the bib using frequency and bar chart from `ggplot2` [@R-ggplot2].
@@ -521,7 +320,7 @@ Quantify and visualize the distribution of methods in the bib using frequency an
 ```{r method_results_plot}
 source("R/analyze_method_frequency.R")
 
-method_results <- analyze_method_frequency(clean_bib_data)
+method_results <- analyze_method_frequency(clean_bib_data_prisma)
 print(method_results$plot)
 print(method_results$counts)
 ```
@@ -534,8 +333,9 @@ Summarize all papers with `summarise` from [@R-dplyr] and print with `knitr` [@R
 
 ```{r summary_report}
 source("R/add_confidence_scores.R")
+clean_bib_data_prisma <- add_confidence_scores(clean_bib_data_prisma)
 # Create summary report
-summary_stats <- clean_bib_data %>%
+summary_stats <- clean_bib_data_prisma %>%
   summarise(
     total_papers = n(),
     papers_with_methods = sum(detected_methods != ""),
@@ -551,7 +351,7 @@ Count prevalent methods using `count` for frequency analysis and `tidyr` [@R-tid
 
 ```{r top_methods}
 # Show top methods
-top_methods <- clean_bib_data %>%
+top_methods <- clean_bib_data_prisma %>%
   filter(detected_methods != "") %>%
   separate_rows(detected_methods, sep = "; ") %>%
   count(detected_methods, sort = TRUE) %>%
@@ -568,7 +368,7 @@ Examine Value of Information (VOI) papers specifically to assess classification 
 
 ```{r validation_check}
 # Quick validation - check if our detection makes sense
-validation_check <- clean_bib_data %>%
+validation_check <- clean_bib_data_prisma %>%
   filter(has_voi) %>%
   select(TITLE, detected_methods, method_confidence) %>%
   arrange(desc(method_confidence))
@@ -584,32 +384,33 @@ Examine the subset of classifications receiving the highest confidence rating, w
 
 ```{r high_confidence}
 # Check papers with high confidence
-high_confidence <- clean_bib_data %>%
+high_confidence <- clean_bib_data_prisma %>%
   filter(method_confidence == "high") %>%
   select(TITLE, detected_methods, methods_from_title)
 
 print(high_confidence)
 ```
 
-## Hierarchy of decision intensity
+# Hierarchy of decision intensity
 
 Keeney's concept of a "hierarchy of decision intensity" mapped to method sophistication in the literature.
 
 ```{r keeney_intensity}
 source("R/detect_application_domains.R")
-source("R/define_keeney_intensity.R")
+source("R/define_keeney_intensity.R")  # used in classify_decision_intensity
 source("R/classify_decision_intensity.R")
 source("R/analyze_keeney_pattern.R")
+# all those above for run_keeney_analysis
 source("R/run_keeney_analysis.R")
 
 # Ensure all required data is present
-clean_bib_data <- clean_bib_data %>%
+clean_bib_data_prisma <- clean_bib_data_prisma %>%
   mutate(
     full_text = paste(TITLE, ANNOTE, sep = " ")
   )
 
 # Run the complete analysis
-keeney_results <- run_keeney_analysis(clean_bib_data)
+keeney_results <- run_keeney_analysis(clean_bib_data_prisma)
 
 # Display results
 knitr::kable(keeney_results$intensity_stats, 
@@ -635,11 +436,10 @@ Our analysis reveals that `r sum(keeney_results$intensity_stats$keeney_predictio
 ```{r sankey_intensity}
 
 # 1. First, classify the intensity levels
-source("R/classify_decision_intensity.R")
-clean_bib_data <- classify_decision_intensity(clean_bib_data)
+clean_bib_data_prisma <- classify_decision_intensity(clean_bib_data_prisma)
 
 # Count papers by method and intensity level
-method_level_counts <- clean_bib_data %>%
+method_level_counts <- clean_bib_data_prisma %>%
   filter(detected_methods != "" & primary_intensity != "Unclassified") %>%
   separate_rows(detected_methods, sep = "; ") %>%
   count(detected_methods, primary_intensity) %>%
@@ -669,7 +469,7 @@ nodes <- data.frame(
 source("R/plot_sankey.R")
 
 # Get our intensity level counts
-level_counts <- clean_bib_data %>%
+level_counts <- clean_bib_data_prisma %>%
   filter(primary_intensity != "Unclassified") %>%
   count(primary_intensity) %>%
   mutate(
