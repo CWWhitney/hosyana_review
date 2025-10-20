@@ -54,6 +54,7 @@ suppressPackageStartupMessages({
   library(knitr)
   library(magrittr)
   library(DT)            # Interactive tables
+  library(qs)
   library(networkD3)
   library(tidytext)
   library(ggthemes)      # Additional ggplot themes
@@ -70,35 +71,11 @@ packages_to_cite <- c("base",
                      "knitr", 
                      "magrittr",
                      "bookdown", 
+                     "qs",
                      "tidytext",
                      "networkD3",
                      "DT")
 knitr::write_bib(packages_to_cite, "bib/packages.bib")
-
-# Set ggplot theme for consistent styling
-theme_set(theme_minimal(base_size = 12, base_family = "sans"))
-theme_update(
-  plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
-  plot.subtitle = element_text(face = "italic", size = 12, hjust = 0.5),
-  axis.title = element_text(face = "bold", size = 12),
-  legend.title = element_text(face = "bold"),
-  panel.grid.minor = element_blank(),
-  plot.caption = element_text(face = "italic", size = 10)
-)
-
-# Custom color palette for methods
-method_colors <- c(
-  bayesian = "#1f77b4",
-  simulation = "#ff7f0e", 
-  optimization = "#2ca02c",
-  statistical = "#d62728",
-  decision_analysis = "#9467bd",
-  machine_learning = "#8c564b",
-  multi_criteria = "#e377c2",
-  economic_evaluation = "#7f7f7f",
-  risk_analysis = "#bcbd22",
-  forecasting = "#17becf"
-)
 
 ```
 
@@ -112,11 +89,25 @@ method_colors <- c(
 
 ## Bibliographic Data
 
-Import bibliographic records using the `bib2df` package [@R-bib2df], converting our BibTeX file into a structured data frame for systematic processing.
+Import bibliographic records using the `bib2df` and `qs` package [@R-bib2df' @R-qs], converting our BibTeX file into a structured data frame for systematic processing.
 
 ```{r read_data, echo=TRUE}
 # Read the bib file
-bib_data <- bib2df::bib2df("bib/23_Methods_Review_Holistic_Systems.bib")
+library(bib2df)
+library(qs) 
+
+bib_file <- "bib/23_Methods_Review_Holistic_Systems.bib"
+cache_file <- "bib/bib_data_cache.qs"
+
+if (file.exists(cache_file)) {
+  bib_data <- qs::qread(cache_file)
+  cat("Loaded from qs cache\n")
+} else {
+  bib_data <- bib2df::bib2df(bib_file)
+  qs::qsave(bib_data, cache_file)
+  cat("Created qs cache\n")
+}
+
 ```
 
 Our BibTeX contains (n = `r nrow(bib_data)`) citations.
@@ -160,7 +151,7 @@ source("R/apply_exclusion_rules.R")
 clean_bib_data <- apply_exclusion_rules(clean_bib_data)
 ```
 
-The cleaned bib file contains (n = `r nrow(bib_data)`) citations.
+The cleaned bib file contains (n = `r nrow(clean_bib_data)`) citations.
 
 ## Run PRISMA Pipeline
 
@@ -196,8 +187,8 @@ Generate PRISMA flow statistics using `generate_prisma_stats`, with `dplyr` [@R-
 
 Export PRISMA results using `export_prisma_results`, with `bib2df` [@R-bib2df] to create separate BibTeX files for included and excluded papers.
 
-```{r export_results}
-  source("R/export_results.R")
+```{r export_prisma_results}
+  source("R/export_prisma_results.R")
 ```
 
 Generate PRISMA flow output using `generate_prisma_flow_output`, with base R [@R-base] to format statistics for the systematic review flow diagram.
@@ -217,7 +208,8 @@ prisma_results <- run_prisma_pipeline(clean_bib_data)
 # Access results
 prisma_results$statistics
 prisma_results$export_files$included_count
-prisma_results$export_files$excluded_count
+
+clean_bib_data_prisma <- prisma_results$classified_data
 ```
 
 Validate manual classification accuracy using `validate_manual_decisions`, with `dplyr` [@R-dplyr] to verify that 'bin' papers are excluded and 'read' papers are included as intended.
@@ -226,35 +218,24 @@ Validate manual classification accuracy using `validate_manual_decisions`, with 
 source("R/validate_manual_decisions.R")
 
 # Step 1: Run all classification steps first
-clean_bib_data <- identify_duplicates(clean_bib_data)
-clean_bib_data <- apply_manual_classifications(clean_bib_data)
-clean_bib_data <- apply_exclusion_rules(clean_bib_data)
-clean_bib_data <- apply_final_classification(clean_bib_data)  # This creates final_decision
+clean_bib_data_prisma <- identify_duplicates(clean_bib_data_prisma)
+clean_bib_data_prisma <- apply_manual_classifications(clean_bib_data_prisma)
+clean_bib_data_prisma <- apply_exclusion_rules(clean_bib_data_prisma)
+clean_bib_data_prisma <- apply_final_classification(clean_bib_data_prisma)  # This creates final_decision
 
 # Step 2: Now run validation (final_decision exists now)
-validation_results <- validate_manual_decisions(clean_bib_data)
+validation_results <- validate_manual_decisions(clean_bib_data_prisma)
 
 
 if(validation_results$read_papers_incorrectly_excluded == 0 & 
    validation_results$bin_papers_incorrectly_included == 0) {
-  cat("✅ Validation PASSED: All manual classifications respected\n")
+  cat("Validation PASSED: All manual classifications respected\n")
   cat("   -", validation_results$read_papers_total, "read papers correctly included\n")
-  cat("   -", validation_results$bin_papers_total, "bin papers correctly excluded\n")
 } else {
-  cat("❌ Validation FAILED: Manual classification errors detected\n")
+  cat("Validation FAILED: Manual classification errors detected\n")
 }
 
 ```
-
-Our automated procedures excluded several additional papers
-
-- Non-scientific articles and reports (`r prisma_results$step_counts$excluded_non_scientific` excluded)
-- Inappropriate document types: annual reports, syllabus, course notes (`r prisma_results$step_counts$excluded_doc_type` excluded),
-- Duplicates (`r prisma_results$step_counts$duplicates_removed` removed),
-- Preprints when published versions were available (`r prisma_results$step_counts$excluded_preprint` excluded),
-- Manually marked for exclusion during preliminary screening (`r prisma_results$step_counts$manually_excluded` excluded)
-
-**Note:** We did not exclude based on content relevance to ensure comprehensive method coverage, resulting in `r prisma_results$step_counts$final_included` papers for analysis.
 
 # Method Extraction and Synthesis
 
@@ -269,7 +250,7 @@ Search the bibliographic record for method terms from titles, abstracts, keyword
 ```{r method_discovery_comprehensive, echo=TRUE}
 
 # Combine all text fields for comprehensive analysis
-all_text_data <- clean_bib_data %>%
+all_text_data <- clean_bib_data_prisma %>%
   mutate(
     combined_text = paste(
       TITLE, 
@@ -298,23 +279,23 @@ knitr::kable(
 ```
 
 
-<!-- ```{r bigram_analysis, echo=TRUE} -->
-<!-- # Analyze multi-word method terms using n-grams -->
-<!-- method_bigrams_comprehensive <- all_text_data %>% -->
-<!--   select(combined_text) %>% -->
-<!--   unnest_tokens(bigram, combined_text, token = "ngrams", n = 2) %>% -->
-<!--   count(bigram, sort = TRUE) %>% -->
-<!--   filter(n > 2)  # Keep only terms appearing multiple times -->
-<!-- ``` -->
+```{r bigram_analysis, echo=TRUE}
+# Analyze multi-word method terms using n-grams
+method_bigrams_comprehensive <- all_text_data %>%
+  select(combined_text) %>%
+  unnest_tokens(bigram, combined_text, token = "ngrams", n = 2) %>%
+  count(bigram, sort = TRUE) %>%
+  filter(n > 2)  # Keep only terms appearing multiple times
+```
 
 
-<!-- ```{r display_bigrams, echo=FALSE} -->
-<!-- knitr::kable( -->
-<!--   method_bigrams_comprehensive %>% head(20), -->
-<!--   caption = "Top 20 Most Frequent Bigrams (Two-Word Terms)", -->
-<!--   col.names = c("Bigram", "Frequency") -->
-<!-- ) -->
-<!-- ``` -->
+```{r display_bigrams, echo=FALSE}
+knitr::kable(
+  method_bigrams_comprehensive %>% head(20),
+  caption = "Top 20 Most Frequent Bigrams (Two-Word Terms)",
+  col.names = c("Bigram", "Frequency")
+)
+```
 
 
 ```{r method_pattern_analysis, echo=TRUE}
@@ -378,9 +359,6 @@ method_categories <- list(
   risk_analysis = c("risk analysis", "risk assessment", "sensitivity analysis", "uncertainty analysis")
 )
 ```
-
-
-##################
 
 ```{r}
 # Ensure method detection has been run
@@ -501,13 +479,6 @@ export_qualitative_csv <- function(method_sentences, output_file = "data/qualita
 csv_export <- export_qualitative_csv(method_sentences_comprehensive)
 ```
 
-```{r}
-```
-
-#################
-#################
-#################
-#################
 
 # Automated Method Detection
 
