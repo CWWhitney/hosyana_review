@@ -421,7 +421,7 @@ knitr::kable(keeney_results$intensity_stats,
 
 Plot with `networkD3` [@R-networkD3]. 
 
-## Testing Keeney's Hierarchy of Decision Intensity
+## Keeney's Hierarchy of Decision Intensity
 
 Following Keeney's insight that most decisions are "no-brainers" while few require deep analytical support [@keeneyMakingBetterDecision2004b], we classified method approaches in our literature by decision intensity:
 
@@ -437,31 +437,6 @@ Our analysis reveals that `r sum(keeney_results$intensity_stats$keeney_predictio
 
 # 1. First, classify the intensity levels
 clean_bib_data_prisma <- classify_decision_intensity(clean_bib_data_prisma)
-
-# Count papers by method and intensity level
-method_level_counts <- clean_bib_data_prisma %>%
-  filter(detected_methods != "" & primary_intensity != "Unclassified") %>%
-  separate_rows(detected_methods, sep = "; ") %>%
-  count(detected_methods, primary_intensity) %>%
-  mutate(
-    intensity_num = case_when(
-      primary_intensity == "Level 1: Intuitive Decisions" ~ 1,
-      primary_intensity == "Level 2: Simple Analysis" ~ 2,
-      primary_intensity == "Level 3: Structured Analysis" ~ 3,
-      primary_intensity == "Level 4: Advanced Analysis" ~ 4,
-      primary_intensity == "Level 5: Deep Uncertainty" ~ 5
-    )
-  ) %>%
-  arrange(intensity_num, detected_methods)
-
-# Create nodes for methods and levels
-method_nodes <- unique(method_level_counts$detected_methods)
-level_nodes <- c("Level 1", "Level 2", "Level 3", "Level 4", "Level 5")
-
-nodes <- data.frame(
-  name = c(method_nodes, level_nodes),
-  node_group = c(rep("method", length(method_nodes)), rep("level", length(level_nodes)))
-)
 
 ```
 
