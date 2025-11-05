@@ -63,6 +63,9 @@ library(bib2df)
 library(qs) 
 
 bib_file <- "bib/23_Methods_Review_Holistic_Systems.bib"
+# Run if any changes to bib_file (takes a long time, several hours)
+# bib_data <- bib2df::bib2df(bib_file)
+# qs::qsave(bib_data, cache_file)
 cache_file <- "bib/bib_data_cache.qs"
 
 if (file.exists(cache_file)) {
