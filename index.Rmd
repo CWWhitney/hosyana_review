@@ -3,10 +3,12 @@ title: "Methods for Supporting Decisions under Uncertainty"
 author: "Cory Whitney"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 bibliography: 
-  - bib/01_introduction.bib
-  - bib/01_1_review_synthesis.bib
+  - bib/decisions.bib
   - bib/packages.bib
-  - bib/23_Methods_Review_Holistic_Systems.bib
+  
+  - bib/01_1_review_synthesis.bib
+  - bib/01_Introduction.bib
+ 
 output: 
   html_document:
     toc: true
@@ -44,6 +46,8 @@ knitr::opts_chunk$set(
 # Load required packages quietly
 suppressPackageStartupMessages({
   library(bib2df)        # BibTeX file processing
+  library(bibtex)
+  library(data.table)
   library(dplyr)         # Data manipulation
   library(tidyr)         # Data tidying
   library(stringr)       # String operations
@@ -54,7 +58,7 @@ suppressPackageStartupMessages({
   library(knitr)
   library(magrittr)
   library(DT)            # Interactive tables
-  library(qs)
+  library(qs2)
   library(networkD3)
   library(tidytext)
   library(ggthemes)      # Additional ggplot themes
@@ -63,6 +67,8 @@ suppressPackageStartupMessages({
 # Generate bibliography for all used packages
 packages_to_cite <- c("base", 
                       "bib2df", 
+                      "bibtex",
+                      "data.table",
                       "dplyr", 
                       "tidyr", 
                       "stringr", 
@@ -71,6 +77,7 @@ packages_to_cite <- c("base",
                      "knitr", 
                      "magrittr",
                      "bookdown", 
+                     "qs2",
                      "qs",
                      "tidytext",
                      "networkD3",
@@ -85,279 +92,301 @@ knitr::write_bib(packages_to_cite, "bib/packages.bib")
 ```{r child="02_Review.Rmd"}
 ```
 
+```{r child="03_Data_Import_Pre_Processing.Rmd"}
+```
+
 # Method Extraction and Synthesis
 
-We use Keeney’s representation of where formal decision support is required and applied as motivation and framework for the assessment - Keeney’s judgment about how 10,000 decisions are typically made - his personal histogram of 10,000 decisions being faced by numerous decision makers [@keeneyMakingBetterDecision2004b].
+We use Keeney’s representation of where formal decision support is required and applied as motivation and framework for the assessment - Keeney’s personal histogram of 10,000 decisions being faced by numerous decision makers [@keeneyMakingBetterDecision2004b].
 
 ![Keeney’s judgment about how 10,000 decisions are typically made - his personal histogram of 10,000 decisions being faced by numerous decision makers](figs/fig01_Keeney.png){width=50%}
 
-## Method Term Discovery
-
-Search the bibliographic record for method terms from titles, abstracts, keywords, and annotations.
-
-```{r method_discovery_comprehensive, echo=TRUE}
-
-# Combine all text fields for comprehensive analysis
-all_text_data <- clean_bib_data_prisma %>%
-  mutate(
-    combined_text = paste(
-      TITLE, 
-      ifelse(!is.na(ABSTRACT), ABSTRACT, ""),
-      ifelse(!is.na(KEYWORDS), KEYWORDS, ""),
-      ifelse(!is.na(ANNOTE), ANNOTE, ""),
-      sep = " "
-    )
-  )
-
-# Tokenize all text fields to discover method terms
-method_terms_comprehensive <- all_text_data %>%
-  select(combined_text) %>%
-  unnest_tokens(word, combined_text) %>%
-  count(word, sort = TRUE) %>%
-  filter(n > 5, nchar(word) > 3) %>%  # Filter for meaningful terms
-  anti_join(stop_words)  # Remove common stop words
-```
-
-```{r display_method_terms, echo=FALSE}
-knitr::kable(
-  method_terms_comprehensive %>% head(30),
-  caption = "Top 30 Most Frequent Terms Across All Text Fields",
-  col.names = c("Term", "Frequency")
-)
-```
-
-## Use pattern matching to find potential method terms in context
-
-```{r method_pattern_analysis, echo=TRUE}
-# Use pattern matching to find potential method terms in context
-method_patterns <- c(
-  "analysis", "model", "method", "approach", "framework", 
-  "technique", "algorithm", "estimation", "evaluation", "simulation",
-  "optimization", "bayesian", "statistical", "stochastic"
-)
-
-# Extract sentences containing method terms
-method_sentences <- all_text_data %>%
-  select(combined_text) %>%
-  unnest_tokens(sentence, combined_text, token = "sentences") %>%
-  filter(str_detect(tolower(sentence), paste(method_patterns, collapse = "|"))) %>%
-  sample_n(10)  # Sample for review
-```
-
-## Sample Sentences Containing Method Terms
-
-```{r display_method_context, echo=FALSE}
-knitr::kable(
-  data.frame(Example_Sentences = method_sentences$sentence)
-)
-```
-
-# Method categories
-
-```{r method_categories}
-# Method categories
-method_categories <- list(
-  bayesian = c("bayesian", "bayes", "mcmc", "markov chain", "prior", "posterior"),
-  simulation = c("simulation", "monte carlo", "stochastic", "agent-based", "discrete event"),
-  optimization = c("optimization", "linear programming", "nonlinear programming", "heuristic"),
-  statistical = c("regression", "anova", "time series", "survival analysis", "mixed model"),
-  decision_analysis = c("decision analysis", "decision tree", "markov model", "value of information", "voi"),
-  machine_learning = c("machine learning", "neural network", "random forest", "svm", "clustering"),
-  multi_criteria = c("multi-criteria", "multi criteria", "analytic hierarchy", "ahp", "topsis"),
-  economic_evaluation = c("cost-effectiveness", "cost-benefit", "cost-utility", "economic evaluation"),
-  risk_analysis = c("risk analysis", "risk assessment", "sensitivity analysis", "uncertainty analysis")
-)
-```
-
 # Automated Method Detection
 
-Apply automated classification using a custom dictionary-based algorithm `detect_methods.R` identifying methods from text content with `purrr` package [@R-purrr]. Methods appearing in titles receive higher reliability weights for subsequent analysis.
+Apply automated classification using a custom dictionary-based algorithm `detect_methods.R` identifying methods from text content with `purrr` package [@R-purrr]. Methods appearing in titles receive higher reliability weights for subsequent analysis. Create `clean_bib_data` by adapting `clean_bib_data_prisma` with the `mutate` function.
 
-```{r detect_methods}
-source("R/detect_methods.R")
-# Apply method detection
-clean_bib_data_prisma <- clean_bib_data_prisma %>%
-  mutate(
-    detected_methods = map_chr(full_text, detect_methods),
-    methods_from_title = map_chr(TITLE, detect_methods)
+```{r method_categories, echo=FALSE}
+# Method categories
+
+method_categories <- list(
+  # Core decision structuring)
+  "Decision Analysis" = c(
+    # Formal decision analysis
+    "decision analysis", "decision analytic", "decision tree", "influence diagram", 
+    "decision framework", "decision support framework",
+    # Value-focused
+    "value of information", "voi", "value of perfect information", "vopi",
+    "value of partial perfect information", "voppi", "expected value",
+    "expected value of perfect information", "evpi",
+    # Decision rules
+    "maximin", "maximax", "minimax regret", "hurwicz", "laplace",
+    # Advanced DA
+    "markov decision process", "mdp", "partially observable markov decision process", "pomdp",
+    "dynamic decision analysis", "sequential decision", "real options analysis"
+  ),
+  
+  # Quantifying and managing uncertainty)
+  "Uncertainty & Risk Analysis" = c(
+    # Risk analysis
+    "risk analysis", "risk assessment", "risk management", "risk characterization",
+    "probabilistic risk assessment", "pra", "quantitative risk assessment", "qra",
+    # Uncertainty analysis
+    "uncertainty analysis", "uncertainty quantification", "uncertainty propagation",
+    "epistemic uncertainty", "aleatory uncertainty", "deep uncertainty",
+    "robust decision making", "info-gap", "info gap",
+    # Sensitivity analysis
+    "sensitivity analysis", "global sensitivity analysis", "local sensitivity",
+    "sensitivity testing", "parameter sensitivity", "tornado diagram",
+    "sobol", "morris method", "fast", "e-fast",
+    # Scenario analysis
+    "scenario analysis", "scenario planning", "scenario development",
+    "multiple futures", "alternative futures"
+  ),
+  
+  # Numerical/computational approaches)
+  "Computational Modeling" = c(
+    # Simulation methods
+    "simulation", "monte carlo", "monte-carlo", "stochastic simulation",
+    "discrete event simulation", "des", "agent-based model", "abm", "multi-agent",
+    "system dynamics", "system dynamic", "continuous simulation",
+    "microsimulation", "micro-simulation", "individual-based model",
+    "markov model", "state-transition model", "cohort model",
+    # Numerical methods
+    "numerical analysis", "numerical method", "finite element", "finite difference",
+    "computational model", "computer model", "digital twin"
+  ),
+  
+  # Data-driven inference)
+  "Statistical Methods" = c(
+    # Bayesian methods
+    "bayesian", "bayes", "mcmc", "markov chain monte carlo", "gibbs sampling",
+    "bayesian hierarchical", "bayesian network", "belief network",
+    "bayesian belief network", "bn", "bayesian model averaging",
+    "prior distribution", "posterior distribution", "conjugate prior",
+    # Frequentist methods
+    "regression", "linear regression", "logistic regression", "cox regression",
+    "generalized linear model", "glm", "mixed model", "multilevel model",
+    "time series", "arima", "arch", "garch", "vector autoregression", "var",
+    "survival analysis", "kaplan-meier", "cox proportional hazards",
+    "meta-analysis", "systematic review", "meta regression",
+    # Experimental design
+    "design of experiments", "doe", "factorial design", "response surface",
+    "optimal design", "adaptive design"
+  ),
+  
+  # Finding optimal solutions)
+  "Optimization" = c(
+    # Mathematical programming
+    "optimization", "mathematical programming", "linear programming", "lp",
+    "integer programming", "mixed integer programming", "mip",
+    "nonlinear programming", "nlp", "quadratic programming", "qp",
+    "dynamic programming", "stochastic programming", "robust optimization",
+    "multi-objective optimization", "pareto optimization", "pareto front",
+    # Heuristics & metaheuristics
+    "heuristic", "metaheuristic", "genetic algorithm", "ga", "evolutionary algorithm",
+    "simulated annealing", "tabu search", "particle swarm", "ant colony",
+    # Constraint programming
+    "constraint programming", "constraint satisfaction", "sat solver"
+  ),
+  
+  # Handling multiple objectives)
+  "Multi-Criteria Analysis" = c(
+    # MCDA methods
+    "multi-criteria", "multi criteria", "multiattribute", "multi-attribute",
+    "multicriteria decision analysis", "mcda", "multiple criteria",
+    "analytic hierarchy process", "ahp", "analytic network process", "anp",
+    "topsis", "technique for order preference by similarity", 
+    "promethee", "preference ranking organization method", 
+    "electre", "elimination and choice expressing reality",
+    "multi-objective decision analysis", "moda",
+    # Value/utility theory
+    "multiattribute utility theory", "maut", "multiattribute value theory", "mavt",
+    "utility function", "value function", "preference elicitation",
+    "swing weighting", "trade-off analysis"
+  ),
+  
+  # Data-driven pattern recognition)
+  "Machine Learning & AI" = c(
+    # Supervised learning
+    "machine learning", "ml", "neural network", "nn", "deep learning",
+    "convolutional neural network", "cnn", "recurrent neural network", "rnn",
+    "random forest", "support vector machine", "svm", "gradient boosting",
+    "xgboost", "lightgbm", "catboost",
+    # Unsupervised learning
+    "clustering", "k-means", "hierarchical clustering", "dbscan",
+    "dimensionality reduction", "pca", "t-sne", "umap",
+    # Reinforcement learning
+    "reinforcement learning", "rl", "q-learning", "deep q-network", "dqn",
+    "policy gradient", "actor-critic",
+    # Natural language processing
+    "natural language processing", "nlp", "text mining", "topic modeling"
+  ),
+  
+  # Economic assessment methods)
+  "Economic Evaluation" = c(
+    # Cost analysis
+    "economic evaluation", "cost-effectiveness", "ce", "cost-benefit", "cba",
+    "cost-utility", "cua", "cost-minimization", "cma",
+    # Health economics
+    "quality-adjusted life year", "qaly", "disability-adjusted life year", "daly",
+    "incremental cost-effectiveness ratio", "icer",
+    "budget impact analysis", "bia", "affordability",
+    # Advanced economic methods
+    "contingent valuation", "willingness to pay", "wtp",
+    "discrete choice experiment", "dce", "stated preference",
+    "revealed preference", "hedonic pricing"
+  ),
+  
+  # Stakeholder engagement)
+  "Participatory Methods" = c(
+    # Expert elicitation
+    "expert elicitation", "expert judgment", "expert opinion",
+    "delphi method", "delphi technique", "modified delphi",
+    "nominal group technique", "ngt",
+    # Stakeholder engagement
+    "stakeholder analysis", "stakeholder engagement", "stakeholder participation",
+    "stakeholder deliberation", "participatory modeling",
+    # Consensus methods
+    "consensus development", "consensus conference", "consensus panel",
+    "structured decision making", "sdm", "collaborative decision making"
+  ),
+  
+  # Holistic/whole-system approaches)
+  "Systems Analysis" = c(
+    "systems analysis", "systems thinking", "system analysis",
+    "soft systems methodology", "ssm",
+    "viable system model", "vsm",
+    "critical systems thinking", "cst",
+    "wicked problems", "complex systems", "complex adaptive systems"
+  ),
+  
+  # Psychology of decision making)
+  "Behavioral Decision Science" = c(
+    "behavioral decision", "cognitive bias", "heuristics and biases",
+    "prospect theory", "expected utility", "subjective expected utility",
+    "bounded rationality", "satisficing",
+    "nudge", "choice architecture", "libertarian paternalism"
+  ),
+  
+  # Decision communication)
+  "Visualization & Communication" = c(
+    "decision dashboard", "interactive visualization", "visual analytics",
+    "geographic information system", "gis", "spatial analysis",
+    "data visualization", "infographic", "storytelling",
+    "uncertainty visualization", "probability visualization"
   )
-```
-
-
-## Create qualitative data
-
-```{r clean_bib_data_prisma}
-# Apply method detection to the properly filtered data
-clean_bib_data_prisma <- clean_bib_data_prisma %>%
-  mutate(
-    detected_methods = map_chr(full_text, detect_methods),
-    methods_from_title = map_chr(TITLE, detect_methods)
-  )
-
-# Check the results
-table(clean_bib_data_prisma$detected_methods != "")
-
-# Ensure full_text exists in the filtered data
-if(!"full_text" %in% names(prisma_filtered_data)) {
-  prisma_filtered_data <- prisma_filtered_data %>%
-    mutate(full_text = paste(TITLE, ANNOTE, sep = " "))
-}
-
-# Create qualitative data with only existing columns
-qualitative_data <- clean_bib_data_prisma %>%
-  mutate(
-    # Combine all relevant text fields that exist
-    full_content = paste(
-      ifelse(!is.na(TITLE), paste("TITLE:", TITLE), ""),
-      ifelse("ABSTRACT" %in% names(.) & !is.na(ABSTRACT), paste("ABSTRACT:", ABSTRACT), ""),
-      ifelse("KEYWORDS" %in% names(.) & !is.na(KEYWORDS), paste("KEYWORDS:", KEYWORDS), ""),
-      ifelse("ANNOTE" %in% names(.) & !is.na(ANNOTE), paste("ANNOTATION:", ANNOTE), ""),
-      sep = "\n\n"
-    )
-  ) %>%
-  select(BIBTEXKEY, TITLE, full_content)
-
-# Extract method content from available text
-method_sentences_comprehensive <- qualitative_data %>%
-  unnest_tokens(sentence, full_content, token = "sentences") %>%
-  filter(str_detect(tolower(sentence), 
-                   "method|approach|technique|model|framework|analysis|algorithm")) %>%
-  mutate(
-    sentence_length = nchar(sentence),
-    # Categorize by method focus
-    method_focus = case_when(
-      str_detect(tolower(sentence), "bayesian|prior|posterior") ~ "Bayesian",
-      str_detect(tolower(sentence), "simulation|monte carlo|stochastic") ~ "Simulation",
-      str_detect(tolower(sentence), "optimization|linear programming") ~ "Optimization",
-      str_detect(tolower(sentence), "decision.*tree|value.*information") ~ "Decision Analysis",
-      str_detect(tolower(sentence), "machine learning|neural network") ~ "Machine Learning",
-      TRUE ~ "General Methodology"
-    )
-  )
-```
-
-# Summary of methods
-
-```{r}
-# Summary of method themes
-method_themes <- method_sentences_comprehensive %>%
-  count(method_focus, sort = TRUE) %>%
-  mutate(percentage = n / n() * 100)
-
-knitr::kable(method_themes, 
-             caption = "Bibliographic Assessment: method Themes in Literature",
-             col.names = c("method Focus", "Count", "Percentage"))
-```
-
-# Generate synthesis insights
-
-```{r}
-# Generate synthesis insights from our PRISMA results
-synthesis_insights <- list(
-  total_papers_analyzed = prisma_results$step_counts$final_included,
-  papers_for_qualitative = prisma_results$statistics$included$qualitative_synthesis,
-  papers_for_quantitative = prisma_results$statistics$included$quantitative_assessment,
-  method_sentences = nrow(method_sentences_comprehensive),
-  dominant_methods = method_themes %>% head(3) %>% pull(method_focus)
 )
 
-# Display synthesis summary
-cat("## Qualitative Synthesis: Bibliographic Assessment\n\n")
-cat("**Quantitative Analysis:**", synthesis_insights$papers_for_quantitative, "papers\n")
-cat("**Qualitative Synthesis:**", synthesis_insights$papers_for_qualitative, "manually reviewed papers\n")
-cat("**method Content:**", synthesis_insights$method_sentences, "sentences describing methods\n")
-cat("**Dominant method Themes:**", paste(synthesis_insights$dominant_methods, collapse = ", "), "\n")
 
-```
-
-# Show method descriptions
-
-```{r}
-# Show rich method descriptions
-rich_method_descriptions <- method_sentences_comprehensive %>%
-  filter(sentence_length > 50 & sentence_length < 300) %>%
-  filter(!str_detect(tolower(sentence), "abstract|keyword|title")) %>%
-  group_by(method_focus) %>%
-  sample_n(min(2, n())) %>%
-  ungroup() %>%
-  select(Method_Type = method_focus, Description = sentence)
-
-knitr::kable(rich_method_descriptions,
-             caption = "Qualitative Synthesis: method Context Examples")
-```
-
-# Export qualiatative data
-
-Keep as CSV with BibTeX references for further analysis. 
-
-```{r}
-# Export as CSV with BibTeX references for easy analysis
-export_qualitative_csv <- function(method_sentences, output_file = "data/qualitative_synthesis.csv") {
+# Enhanced detection function
+detect_methods <- function(text) {
+  if(is.na(text) || text == "") return("")
   
-  # Create export data frame
-  export_data <- method_sentences %>%
-    mutate(
-      bib_reference = paste("[@", BIBTEXKEY, "]", sep = ""),
-      full_sentence_with_ref = paste(sentence, bib_reference)
-    ) %>%
-    select(BIBTEXKEY, TITLE, method_focus, sentence_length, 
-           full_sentence_with_ref, sentence, bib_reference)
+  text_lower <- tolower(text)
+  methods_detected <- character()
   
-  write.csv(export_data, output_file, row.names = FALSE)
-  cat("Qualitative data with references exported to:", output_file, "\n")
-  return(export_data)
+  for(method in names(method_categories)) {
+    keywords <- method_categories[[method]]
+    # Use word boundaries to avoid partial matches
+    patterns <- paste0("\\b", keywords, "\\b")
+    if(any(str_detect(text_lower, patterns))) {
+      methods_detected <- c(methods_detected, method)
+    }
+  }
+  
+  return(paste(unique(methods_detected), collapse = "; "))
 }
 
-# Run CSV export
-csv_export <- export_qualitative_csv(method_sentences_comprehensive)
+# Apply method detection
+clean_bib_data_methods <- clean_bib_data_prisma %>%
+  mutate(
+    detected_methods = map_chr(full_text, detect_methods),
+    methods_from_title = map_chr(TITLE, detect_methods)
+  )
 ```
 
+After cleaning `r sum((clean_bib_data_methods$detected_methods != "")==TRUE)` papers had some methods detected.
+
+```{r full_text}
+# Ensure full_text exists in the filtered data
+if(!"full_text" %in% names(clean_bib_data_methods)) {
+  clean_bib_data_methods <- clean_bib_data_methods %>%
+    mutate(full_text = paste(TITLE, ANNOTE, sep = " "))
+}
+```
+
+`r length(clean_bib_data_methods$full_text)` papers have a full text for further analysis. 
 
 ## Method Frequency Analysis
 
 Quantify and visualize the distribution of methods in the bib using frequency and bar chart from `ggplot2` [@R-ggplot2].
 
-```{r method_results_plot}
-source("R/analyze_method_frequency.R")
+```{r method_results_plot, echo=FALSE}
+# Method frequency analysis
+analyze_method_frequency <- function(data) {
+  method_counts <- data %>%
+    filter(detected_methods != "") %>%
+    separate_rows(detected_methods, sep = "; ") %>%
+    count(detected_methods, sort = TRUE)
+  
+  return(list(counts = method_counts))
+}
 
-method_results <- analyze_method_frequency(clean_bib_data_prisma)
-print(method_results$plot)
-print(method_results$counts)
+method_results <- analyze_method_frequency(clean_bib_data_methods)
+
+kable(method_results$counts, caption = "Counts of methods used")
+
 ```
-
-The `method_results` reveal both dominant and less common approaches.
 
 ## Papers Summary
 
 Summarize all papers with `summarise` from [@R-dplyr] and print with `knitr` [@R-knitr]. 
 
-```{r summary_report}
-source("R/add_confidence_scores.R")
-clean_bib_data_prisma <- add_confidence_scores(clean_bib_data_prisma)
+```{r add_confidence_scores, echo=FALSE}
+# Add confidence scores for method detection
+add_confidence_scores <- function(data) {
+  data %>%
+    mutate(
+      # Confidence based on where method was detected
+      method_confidence = case_when(
+        methods_from_title != "" & detected_methods != "" ~ "high",
+        methods_from_title != "" ~ "medium",
+        detected_methods != "" ~ "medium",
+        TRUE ~ "low"
+      ),
+      
+      # Number of methods detected
+      method_count = str_count(detected_methods, ";") + 1,
+      method_count = ifelse(detected_methods == "", 0, method_count)
+    )
+}
+
+clean_bib_data_confidence <- add_confidence_scores(clean_bib_data_methods)
+
 # Create summary report
-summary_stats <- clean_bib_data_prisma %>%
+summary_stats <- clean_bib_data_confidence %>%
   summarise(
     total_papers = n(),
     papers_with_methods = sum(detected_methods != ""),
     high_confidence = sum(method_confidence == "high")
   )
 
-knitr::kable(summary_stats, caption = "Summary of papers")
+knitr::kable(summary_stats, caption = "Summary of our confidence in the detection of methods applied in the selected papers")
 ```
 
 ## Dominant Methods
 
 Count prevalent methods using `count` for frequency analysis and `tidyr` [@R-tidyr] for data restructuring.
 
-```{r top_methods}
+```{r top_methods, echo=FALSE}
 # Show top methods
-top_methods <- clean_bib_data_prisma %>%
+top_methods <- clean_bib_data_confidence %>%
   filter(detected_methods != "") %>%
   separate_rows(detected_methods, sep = "; ") %>%
   count(detected_methods, sort = TRUE) %>%
   head(10)
 
-print(top_methods)
+kable(top_methods, caption = "Top 10 methods applied across all papers")
 ```
 
 `top_methods` reveals the method ecosystem's core components, highlighting established practices and potential gaps in decision support under uncertainty literature.
@@ -366,14 +395,14 @@ print(top_methods)
 
 Examine Value of Information (VOI) papers specifically to assess classification plausibility and confidence distribution within this focused method domain.
 
-```{r validation_check}
+```{r validation_check, echo=FALSE}
 # Quick validation - check if our detection makes sense
-validation_check <- clean_bib_data_prisma %>%
-  filter(has_voi) %>%
+
+validation_check <- clean_bib_data_confidence %>%
   select(TITLE, detected_methods, method_confidence) %>%
   arrange(desc(method_confidence))
 
-print(validation_check)
+kable(table(validation_check$detected_methods), caption = "Validate detected methods")
 ```
 
 `validation_check` ensures classification accuracy.
@@ -382,116 +411,68 @@ print(validation_check)
 
 Examine the subset of classifications receiving the highest confidence rating, where methods were detected in both titles and full text.
 
-```{r high_confidence}
+```{r high_confidence, echo=FALSE}
 # Check papers with high confidence
-high_confidence <- clean_bib_data_prisma %>%
+
+high_confidence <- clean_bib_data_confidence %>%
   filter(method_confidence == "high") %>%
   select(TITLE, detected_methods, methods_from_title)
 
-print(high_confidence)
+kable(high_confidence, caption = "Papers with high confidence")
 ```
 
-# Hierarchy of decision intensity
+## Hierarchy of decision intensity
 
 Keeney's concept of a "hierarchy of decision intensity" mapped to method sophistication in the literature.
 
-```{r keeney_intensity}
-source("R/detect_application_domains.R")
-source("R/define_keeney_intensity.R")  # used in classify_decision_intensity
-source("R/classify_decision_intensity.R")
-source("R/analyze_keeney_pattern.R")
-# all those above for run_keeney_analysis
-source("R/run_keeney_analysis.R")
-
-# Ensure all required data is present
-clean_bib_data_prisma <- clean_bib_data_prisma %>%
-  mutate(
-    full_text = paste(TITLE, ANNOTE, sep = " ")
-  )
-
-# Run the complete analysis
-keeney_results <- run_keeney_analysis(clean_bib_data_prisma)
-
-# Display results
-knitr::kable(keeney_results$intensity_stats, 
-             caption = "Distribution of Decision Intensity Levels")
-
-
-```
-
 Plot with `networkD3` [@R-networkD3]. 
 
-## Keeney's Hierarchy of Decision Intensity
-
-Following Keeney's insight that most decisions are "no-brainers" while few require deep analytical support [@keeneyMakingBetterDecision2004b], we classified method approaches in our literature by decision intensity:
-
-- **Level 1**: Intuitive decisions (heuristics, rules of thumb)
-- **Level 2**: Simple analysis (basic tools, checklists)  
-- **Level 3**: Structured analysis (systematic frameworks)
-- **Level 4**: Advanced analysis (stochastic, optimization)
-- **Level 5**: Deep uncertainty methods (robust decision making)
-
-Our analysis reveals that `r sum(keeney_results$intensity_stats$keeney_prediction == "High frequency")`% of method applications address lower-intensity decisions, supporting Keeney's observation that sophisticated methods are reserved for particularly complex decision contexts.
-
-```{r sankey_intensity}
-
-# 1. First, classify the intensity levels
-clean_bib_data_prisma <- classify_decision_intensity(clean_bib_data_prisma)
-
-```
-
-```{r plot_sankey}
+```{r plot_sankey, echo=FALSE}
 source("R/plot_sankey.R")
 
-# Get our intensity level counts
-level_counts <- clean_bib_data_prisma %>%
-  filter(primary_intensity != "Unclassified") %>%
-  count(primary_intensity) %>%
-  mutate(
-    level_num = case_when(
-      primary_intensity == "Level 1: Intuitive Decisions" ~ 1,
-      primary_intensity == "Level 2: Simple Analysis" ~ 2,
-      primary_intensity == "Level 3: Structured Analysis" ~ 3,
-      primary_intensity == "Level 4: Advanced Analysis" ~ 4,
-      primary_intensity == "Level 5: Deep Uncertainty" ~ 5
-    )
-  ) %>%
-  arrange(level_num)
+method_counts <- clean_bib_data_confidence %>%
+  filter(detected_methods != "") %>%
+  count(detected_methods) %>%
+  arrange(desc(n))
 
-# Prepare data in the EXACT same structure as the working example
-total_papers <- sum(level_counts$n)
+# Take top 10 method categories for clarity
+top_methods <- method_counts %>%
+  head(10)  # Adjust number as needed
 
-# Inputs: Total papers 
-inputs = c(
-  total_papers,  # All papers 
-  0              # No second input needed (set to 0)
-)
+# Prepare data
+total_papers <- sum(method_counts$n)
 
-# Losses: The papers at each level (like the drop-offs in the example)
-losses = c(
-  level_counts$n[level_counts$level_num == 1],  # Level 1 papers
-  level_counts$n[level_counts$level_num == 2],  # Level 2 papers  
-  level_counts$n[level_counts$level_num == 3],  # Level 3 papers
-  level_counts$n[level_counts$level_num == 4],  # Level 4 papers
-  level_counts$n[level_counts$level_num == 5]   # Level 5 papers
-)
+# Inputs
+inputs = c(total_papers, 0)
 
-# Unit
-unit = "Papers"
+# Losses: Counts for top methods
+losses = top_methods$n
 
-# Labels for each stage (matching the structure of the working example)
+# Labels
 labels = c(
   "All Papers",
-  " ",  # Empty for the second input (since we set it to 0)
-  "Level 1\nIntuitive",
-  "Level 2\nSimple", 
-  "Level 3\nStructured",
-  "Level 4\nAdvanced", 
-  "Level 5\nDeep Uncertainty"
+  "",
+  top_methods$detected_methods  # Actual method names
 )
 
-# Create the Sankey diagram
-plot_sankey(inputs, losses, unit, labels)
+# Create Sankey (might need adjustment for long labels)
+plot_sankey(inputs, losses, "Papers", labels)
+
+# For better visualization with long labels, consider abbreviating:
+abbreviated_labels <- c(
+  "All Papers",
+  "",
+  # Abbreviate method names
+  sapply(top_methods$detected_methods, function(x) {
+    if(nchar(x) > 30) {
+      paste0(substr(x, 1, 27), "...")
+    } else {
+      x
+    }
+  })
+)
+
+plot_sankey(inputs, losses, "Papers", abbreviated_labels)
 
 ```
 
