@@ -36,3 +36,5 @@ Regroup and discuss next steps (here they are preliminary):
 
 1. Write synthesis 
 
+Note: the repo is quite large with all the bib files so a special command is needed to get this to load to git
+`git config http.postBuffer 2000000000` (the max buffer), then use git lfs https://git-lfs.com/
