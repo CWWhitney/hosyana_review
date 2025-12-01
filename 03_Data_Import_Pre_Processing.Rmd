@@ -1,0 +1,219 @@
+## Data Import and Preprocessing
+
+### Bibliographic Data
+
+Import bibliographic records using the `bib2df`, `qs` and `qs2` packages [@R-bib2df, @R-qs, @R-qs2], converting our BibTeX file into a structured data frame for systematic processing.
+
+```{r read_bib_data, echo=FALSE}
+
+# Work on Zotero in Lintner (prepare and pre-process)
+# Export properly from Zotero using Better BibTeX plugin
+# Or configure Zotero's BibTeX export settings
+
+# Stream processing for large files
+clean_bib_files <- function(input_dir, output_file) {
+  bib_files <- list.files(input_dir, pattern = "\\.bib$", full.names = TRUE)
+  
+  # Process files sequentially, not all in memory
+  processed_entries <- character(0)
+  
+  for (bib_file in bib_files) {
+    message("Processing: ", basename(bib_file))
+    
+    tryCatch({
+      # Use proper BibTeX parser
+      parsed <- bibtex::read.bib(bib_file)
+      
+      if (length(parsed) > 0) {
+        # Write valid entries immediately
+        bibtex::write.bib(parsed, file = output_file, append = TRUE)
+      }
+    }, error = function(e) {
+      warning("Failed to process ", bib_file, ": ", e$message)
+    })
+  }
+}
+```
+
+Although `bibtex` `read.bib` and `write.bib` functions [@R-bibtex] have done much of the work of removing irrelevant work, we still do some post-processisng to esure that we have a meaningful collection of papers to proceed. We combine all qs bib files into a single new bib file.
+
+```{r create_qs_collection, echo=FALSE}
+# Use data structures from the start
+if (!file.exists("qs/Bib_valid_only.qs")) {
+  clean_bib_files("bib/bib_raw/", "bib/Bib_clean.bib")
+  bib_data <- bib2df::bib2df("bib/Bib_clean.bib")
+  qs::qsave(bib_data, "qs/Bib_valid_only.qs")
+} else {
+  bib_data <- qs::qread("qs/Bib_valid_only.qs")
+}
+
+final_qs_file <- "qs/Bib_valid_only.qs"
+```
+
+Organize all bib data into an accessible dataset with `dplyr` and the `purrr` function `map_dfr` [@R-dplyr, @R-purrr]. 
+
+```{r combined_bib_data_qs}
+# Read and combine all files with type standardization
+
+  data <- qs::qread(final_qs_file)
+  data$source_file <- basename(final_qs_file)  # Track which file it came from
+  
+  # Standardize column types to prevent binding errors
+  combined_bib_data <- data %>%
+    dplyr::mutate(
+      # Convert YEAR to character first, then to numeric (handles NAs)
+      YEAR = as.character(YEAR),
+      YEAR = as.numeric(YEAR),
+      # Ensure other common columns are consistent
+      TITLE = as.character(TITLE),
+      ANNOTE = as.character(ANNOTE),
+      BIBTEXKEY = as.character(BIBTEXKEY)
+    )
+
+```
+
+Our BibTeX contains `r nrow(combined_bib_data)` citations and `r ncol(combined_bib_data)` reference information items for each.
+
+### BibTeX Cleaning
+
+We prepare the BibTeX file using `dplyr` [@R-dplyr], for annotation tracking and text consolidation.
+
+```{r clean_bib_data, echo=FALSE}
+# Basic cleaning and text preparation
+clean_bib_data <- combined_bib_data %>%
+  dplyr::mutate(
+    has_annotation = !is.na(ANNOTE) & ANNOTE != "",
+    annotation_text = ifelse(has_annotation, ANNOTE, ""),
+    full_text = paste(TITLE, ANNOTE, sep = " "),
+    year = as.numeric(YEAR)
+  )
+```
+
+`r sum(clean_bib_data$has_annotation)` of the citations have annotations.
+
+## Run PRISMA Pipeline
+
+Detect duplicates with `identify_duplicates`, using `dplyr` [@R-dplyr] and base R duplicate detection [@R-base] to find both title-based and DOI-based duplicates through text normalization and exact matching.
+
+```{r identify_duplicates, echo=FALSE}
+identify_duplicates <- function(bib_data) {
+  bib_data %>%
+    mutate(
+      # Simple title-based duplicate detection
+      title_clean = str_remove_all(tolower(TITLE), "[^a-z0-9 ]"),
+      is_duplicate = duplicated(title_clean) | duplicated(title_clean, fromLast = TRUE),
+      
+      # DOI-based duplicate detection
+      is_doi_duplicate = !is.na(DOI) & (duplicated(DOI) | duplicated(DOI, fromLast = TRUE)),
+      
+      # Combined duplicate flag
+      duplicate_status = case_when(
+        is_doi_duplicate ~ "doi_duplicate",
+        is_duplicate ~ "title_duplicate", 
+        TRUE ~ "unique"
+      )
+    )
+}
+
+ # Duplicate identification and REMOVAL
+  duplicates_summary <- identify_duplicates(clean_bib_data)
+  
+  # Remove duplicates
+  duplicates_removed <- duplicates_summary %>% filter(duplicate_status == "unique")
+```
+
+A total of `r sum(nrow(clean_bib_data) - nrow(duplicates_removed))` duplicates were removed. 
+
+Apply manual classifications from bib keywords using `apply_manual_classifications`, with `dplyr` [@R-dplyr] and `stringr` [@R-stringr] to identify papers that we manually marked 'bin' for exclusion or 'read' for inclusion.
+
+```{r apply_manual_classifications, echo=FALSE}
+apply_manual_classifications <- function(bib_data) {
+  bib_data %>%
+    mutate(
+      has_bin = str_detect(tolower(KEYWORDS), "\\bbin\\b"),
+      has_read = str_detect(tolower(KEYWORDS), "read cw|read pka"),
+      
+      manual_decision = case_when(
+        has_bin ~ "exclude",
+        has_read & !has_bin ~ "include",
+        TRUE ~ "unreviewed"
+      ),
+      
+      manual_reason = case_when(
+        has_bin ~ "curator_marked_bin",
+        has_read ~ "manually_reviewed_keep",
+        TRUE ~ "not_reviewed"
+      )
+    )
+}
+
+# Manual classifications and REMOVAL
+  manual_classification_summary <- apply_manual_classifications(duplicates_removed)
+  # Remove manually excluded records
+  removed_manually <- manual_classification_summary %>% filter(manual_decision != "exclude")
+
+```
+
+A total of `r nrow(duplicates_removed) - nrow(removed_manually)` records were removed manually. 
+
+Apply additional exclusion rules. Remove all annual reports, syllabus, magazines, course notes, legal documents, bibliography collections etc.
+
+```{r apply_exclusion_rules, echo=FALSE}
+apply_exclusion_rules <- function(bib_data) {
+  bib_data %>%
+    mutate( 
+      # Document type exclusions (specific patterns)
+      exclude_doc_type = str_detect(tolower(TITLE), 
+                                    "annual report|syllabus|catalog|course notes|legal document|bibliography collection"),
+      # Scientific content check (be more specific)
+      exclude_non_scientific = case_when(
+        !is.na(JOURNAL) & str_detect(tolower(JOURNAL), 
+                                     "legal review|law journal|news|magazine|newspaper") ~ TRUE,
+        str_detect(tolower(TITLE), "^news:|^magazine:|^blog:|newspaper article") ~ TRUE,
+        TRUE ~ FALSE
+      ),
+      # Preprint handling - only exclude if we're confident it's a duplicate
+      exclude_preprint = case_when(
+        !is.na(JOURNAL) & str_detect(tolower(JOURNAL), "arxiv|preprint|biorxiv|medrxiv") & 
+          !is.na(PUBLISHER) & str_detect(tolower(PUBLISHER), "elsevier|springer|wiley|taylor") ~ TRUE,
+        TRUE ~ FALSE
+      ),
+      # Content relevance - be more inclusive, focus on clear exclusions
+      exclude_content = case_when(
+        # Only exclude if clearly not decision-related
+        str_detect(tolower(TITLE), "chemistry experiment|physics lab|pure mathematics|organic synthesis") ~ TRUE,
+        # Keep anything that might be decision-related
+        str_detect(tolower(TITLE), "decision|choice|select|evaluate|assess|analyze|model|uncertain|risk") ~ FALSE,
+        # Default to include for systematic review
+        TRUE ~ FALSE
+      ),
+      # Combined automated exclusion
+      automated_exclude = exclude_doc_type | #exclude_language | 
+        exclude_non_scientific | exclude_preprint | exclude_content,
+      automated_reason = case_when(
+        exclude_doc_type ~ "invalid_document_type",
+       # exclude_language ~ "non_english",
+        exclude_non_scientific ~ "non_scientific",
+        exclude_preprint ~ "preprint_with_published_version", 
+        exclude_content ~ "irrelevant_content",
+        TRUE ~ "not_excluded"
+      )
+    )
+}
+
+
+  # Automated exclusion rules and REMOVAL
+  excluded_bib <- apply_exclusion_rules(removed_manually)
+  
+  # Remove automated exclusions (only from unreviewed records)
+  excluded_irrelevant <- excluded_bib %>% 
+    filter(!(manual_decision == "unreviewed" & automated_exclude))
+```
+
+Additional exclusion rules removed `r nrow(removed_manually) - nrow(excluded_irrelevant)` records. Altogether our list of papers has shrunken from `r nrow(clean_bib_data)` to `r nrow(excluded_irrelevant)`
+
+Create `clean_bib_data_prisma` with all classified data. 
+
+```{r clean_bib_data_prisma_excluded_irrelevant}
+clean_bib_data_prisma <- excluded_irrelevant
+```
