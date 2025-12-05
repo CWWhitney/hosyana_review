@@ -1,0 +1,258 @@
+{
+  "analysis_summary": {
+    "total_papers": 12625,
+    "papers_with_methods": 8380,
+    "detection_rate": 66.37623762376238,
+    "high_confidence_papers": 0,
+    "multi_method_papers": 2417,
+    "average_confidence": 0.0236889504950495
+  },
+  "method_statistics": {
+    "DECISION_ANALYSIS": {
+      "count": 1513,
+      "percentage": 11.984158415841584
+    },
+    "POLICY_INTERVENTION": {
+      "count": 830,
+      "percentage": 6.574257425742575
+    },
+    "UNCERTAINTY_ANALYSIS": {
+      "count": 654,
+      "percentage": 5.18019801980198
+    },
+    "STAKEHOLDER_EXPERT": {
+      "count": 316,
+      "percentage": 2.502970297029703
+    },
+    "MODELING_SIMULATION": {
+      "count": 464,
+      "percentage": 3.675247524752475
+    },
+    "BAYESIAN_PROBABILISTIC": {
+      "count": 1200,
+      "percentage": 9.504950495049505
+    },
+    "COMPUTER_ASSISTED": {
+      "count": 1732,
+      "percentage": 13.71881188118812
+    },
+    "VALUE_INFORMATION": {
+      "count": 902,
+      "percentage": 7.144554455445544
+    },
+    "MULTI_CRITERIA": {
+      "count": 210,
+      "percentage": 1.6633663366336635
+    },
+    "OPTIMIZATION": {
+      "count": 592,
+      "percentage": 4.689108910891089
+    },
+    "ECONOMIC_EVALUATION": {
+      "count": 758,
+      "percentage": 6.003960396039604
+    },
+    "GAME_THEORY": {
+      "count": 380,
+      "percentage": 3.00990099009901
+    },
+    "BEHAVIORAL_PSYCHOLOGY": {
+      "count": 535,
+      "percentage": 4.237623762376238
+    },
+    "SYSTEMS_COMPLEXITY": {
+      "count": 1327,
+      "percentage": 10.510891089108911
+    },
+    "TECHNOLOGY_INNOVATION": {
+      "count": 963,
+      "percentage": 7.627722772277227
+    },
+    "ENVIRONMENTAL_SUSTAINABILITY": {
+      "count": 747,
+      "percentage": 5.916831683168317
+    },
+    "QUALITY_PERFORMANCE": {
+      "count": 170,
+      "percentage": 1.3465346534653466
+    },
+    "RISK_SAFETY": {
+      "count": 612,
+      "percentage": 4.847524752475247
+    },
+    "FORECASTING_PREDICTION": {
+      "count": 658,
+      "percentage": 5.211881188118812
+    },
+    "EVALUATION_ASSESSMENT": {
+      "count": 3115,
+      "percentage": 24.673267326732674
+    }
+  },
+  "decade_distribution": {
+    "2000s": 3015,
+    "2010s": 6070,
+    "2020s": 2732,
+    "1980s": 260,
+    "1960s": 19,
+    "1970s": 80,
+    "1910s": 1,
+    "1990s": 285,
+    "1900s": 1,
+    "1950s": 3
+  },
+  "method_by_decade": {
+    "2000s": {
+      "UNCERTAINTY_ANALYSIS": 143,
+      "COMPUTER_ASSISTED": 291,
+      "RISK_SAFETY": 129,
+      "DECISION_ANALYSIS": 288,
+      "EVALUATION_ASSESSMENT": 534,
+      "TECHNOLOGY_INNOVATION": 170,
+      "SYSTEMS_COMPLEXITY": 183,
+      "BAYESIAN_PROBABILISTIC": 221,
+      "POLICY_INTERVENTION": 144,
+      "ENVIRONMENTAL_SUSTAINABILITY": 101,
+      "VALUE_INFORMATION": 98,
+      "OPTIMIZATION": 59,
+      "BEHAVIORAL_PSYCHOLOGY": 76,
+      "STAKEHOLDER_EXPERT": 39,
+      "MODELING_SIMULATION": 77,
+      "GAME_THEORY": 65,
+      "QUALITY_PERFORMANCE": 31,
+      "FORECASTING_PREDICTION": 83,
+      "ECONOMIC_EVALUATION": 103,
+      "MULTI_CRITERIA": 24
+    },
+    "2010s": {
+      "COMPUTER_ASSISTED": 781,
+      "BEHAVIORAL_PSYCHOLOGY": 271,
+      "RISK_SAFETY": 324,
+      "SYSTEMS_COMPLEXITY": 687,
+      "QUALITY_PERFORMANCE": 84,
+      "BAYESIAN_PROBABILISTIC": 642,
+      "POLICY_INTERVENTION": 443,
+      "UNCERTAINTY_ANALYSIS": 333,
+      "TECHNOLOGY_INNOVATION": 515,
+      "EVALUATION_ASSESSMENT": 1570,
+      "MODELING_SIMULATION": 252,
+      "ECONOMIC_EVALUATION": 416,
+      "OPTIMIZATION": 310,
+      "ENVIRONMENTAL_SUSTAINABILITY": 391,
+      "MULTI_CRITERIA": 108,
+      "DECISION_ANALYSIS": 737,
+      "GAME_THEORY": 199,
+      "STAKEHOLDER_EXPERT": 165,
+      "VALUE_INFORMATION": 479,
+      "FORECASTING_PREDICTION": 328
+    },
+    "2020s": {
+      "COMPUTER_ASSISTED": 534,
+      "BEHAVIORAL_PSYCHOLOGY": 140,
+      "QUALITY_PERFORMANCE": 51,
+      "RISK_SAFETY": 128,
+      "EVALUATION_ASSESSMENT": 809,
+      "POLICY_INTERVENTION": 210,
+      "VALUE_INFORMATION": 268,
+      "TECHNOLOGY_INNOVATION": 246,
+      "ENVIRONMENTAL_SUSTAINABILITY": 224,
+      "DECISION_ANALYSIS": 339,
+      "BAYESIAN_PROBABILISTIC": 236,
+      "OPTIMIZATION": 171,
+      "MODELING_SIMULATION": 107,
+      "SYSTEMS_COMPLEXITY": 436,
+      "ECONOMIC_EVALUATION": 225,
+      "MULTI_CRITERIA": 65,
+      "GAME_THEORY": 79,
+      "STAKEHOLDER_EXPERT": 88,
+      "FORECASTING_PREDICTION": 206,
+      "UNCERTAINTY_ANALYSIS": 132
+    },
+    "1980s": {
+      "ECONOMIC_EVALUATION": 4,
+      "POLICY_INTERVENTION": 16,
+      "BEHAVIORAL_PSYCHOLOGY": 24,
+      "COMPUTER_ASSISTED": 38,
+      "DECISION_ANALYSIS": 56,
+      "BAYESIAN_PROBABILISTIC": 26,
+      "ENVIRONMENTAL_SUSTAINABILITY": 6,
+      "MODELING_SIMULATION": 5,
+      "OPTIMIZATION": 14,
+      "GAME_THEORY": 13,
+      "EVALUATION_ASSESSMENT": 84,
+      "TECHNOLOGY_INNOVATION": 15,
+      "VALUE_INFORMATION": 19,
+      "FORECASTING_PREDICTION": 13,
+      "STAKEHOLDER_EXPERT": 8,
+      "MULTI_CRITERIA": 5,
+      "UNCERTAINTY_ANALYSIS": 8,
+      "RISK_SAFETY": 8,
+      "SYSTEMS_COMPLEXITY": 3,
+      "QUALITY_PERFORMANCE": 1
+    },
+    "1970s": {
+      "FORECASTING_PREDICTION": 7,
+      "BAYESIAN_PROBABILISTIC": 8,
+      "POLICY_INTERVENTION": 3,
+      "DECISION_ANALYSIS": 14,
+      "VALUE_INFORMATION": 5,
+      "GAME_THEORY": 2,
+      "COMPUTER_ASSISTED": 15,
+      "BEHAVIORAL_PSYCHOLOGY": 6,
+      "EVALUATION_ASSESSMENT": 20,
+      "MULTI_CRITERIA": 2,
+      "OPTIMIZATION": 3,
+      "TECHNOLOGY_INNOVATION": 4,
+      "MODELING_SIMULATION": 2,
+      "STAKEHOLDER_EXPERT": 1,
+      "RISK_SAFETY": 2,
+      "ECONOMIC_EVALUATION": 1,
+      "UNCERTAINTY_ANALYSIS": 1
+    },
+    "1990s": {
+      "BAYESIAN_PROBABILISTIC": 57,
+      "EVALUATION_ASSESSMENT": 78,
+      "DECISION_ANALYSIS": 67,
+      "VALUE_INFORMATION": 29,
+      "UNCERTAINTY_ANALYSIS": 34,
+      "RISK_SAFETY": 17,
+      "MODELING_SIMULATION": 18,
+      "COMPUTER_ASSISTED": 53,
+      "FORECASTING_PREDICTION": 18,
+      "BEHAVIORAL_PSYCHOLOGY": 17,
+      "OPTIMIZATION": 24,
+      "SYSTEMS_COMPLEXITY": 12,
+      "POLICY_INTERVENTION": 10,
+      "ECONOMIC_EVALUATION": 7,
+      "TECHNOLOGY_INNOVATION": 9,
+      "GAME_THEORY": 15,
+      "MULTI_CRITERIA": 5,
+      "ENVIRONMENTAL_SUSTAINABILITY": 23,
+      "STAKEHOLDER_EXPERT": 11
+    },
+    "1960s": {
+      "DECISION_ANALYSIS": 3,
+      "MODELING_SIMULATION": 1,
+      "BAYESIAN_PROBABILISTIC": 3,
+      "GAME_THEORY": 2,
+      "BEHAVIORAL_PSYCHOLOGY": 1,
+      "TECHNOLOGY_INNOVATION": 1,
+      "OPTIMIZATION": 6,
+      "EVALUATION_ASSESSMENT": 4,
+      "VALUE_INFORMATION": 1,
+      "MULTI_CRITERIA": 1,
+      "COMPUTER_ASSISTED": 2
+    },
+    "1950s": {
+      "DECISION_ANALYSIS": 1,
+      "BAYESIAN_PROBABILISTIC": 1,
+      "OPTIMIZATION": 3,
+      "EVALUATION_ASSESSMENT": 1
+    }
+  },
+  "validation_metrics": {
+    "categories_detected": 20,
+    "decades_covered": 10,
+    "coverage_completeness": 66.37623762376238
+  }
+}

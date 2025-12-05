@@ -1,0 +1,62 @@
+{
+  "total_papers": 12625,
+  "papers_with_methods": 5325,
+  "detection_rate": 42.17821782178218,
+  "source_distribution": {
+    "basic_metadata": 9372,
+    "web_success": 1423,
+    "rich_metadata": 1830
+  },
+  "high_confidence_papers": 124,
+  "method_statistics": {
+    "DECISION_ANALYSIS": {
+      "count": 1883,
+      "percentage": 14.914851485148514
+    },
+    "POLICY_INTERVENTION": {
+      "count": 1100,
+      "percentage": 8.712871287128712
+    },
+    "UNCERTAINTY_ANALYSIS": {
+      "count": 730,
+      "percentage": 5.782178217821783
+    },
+    "STAKEHOLDER_EXPERT": {
+      "count": 353,
+      "percentage": 2.7960396039603963
+    },
+    "MODELING_SIMULATION": {
+      "count": 546,
+      "percentage": 4.324752475247524
+    },
+    "BAYESIAN_PROBABILISTIC": {
+      "count": 1751,
+      "percentage": 13.869306930693071
+    },
+    "COMPUTER_ASSISTED": {
+      "count": 1386,
+      "percentage": 10.978217821782179
+    },
+    "VALUE_INFORMATION": {
+      "count": 1113,
+      "percentage": 8.815841584158415
+    },
+    "MULTI_CRITERIA": {
+      "count": 289,
+      "percentage": 2.289108910891089
+    },
+    "OPTIMIZATION": {
+      "count": 394,
+      "percentage": 3.120792079207921
+    },
+    "ECONOMIC_EVALUATION": {
+      "count": 856,
+      "percentage": 6.780198019801981
+    },
+    "BEHAVIORAL_PSYCHOLOGY": {
+      "count": 714,
+      "percentage": 5.655445544554456
+    }
+  },
+  "web_accessible_papers": 1423
+}

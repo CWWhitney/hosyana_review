@@ -11,7 +11,7 @@
 
 <meta name="author" content="Cory Whitney" />
 
-<meta name="date" content="2025-12-02" />
+<meta name="date" content="2025-12-03" />
 
 <title>Methods for Supporting Decisions under Uncertainty</title>
 
@@ -2892,7 +2892,7 @@ display: none;
 <h1 class="title toc-ignore">Methods for Supporting Decisions under
 Uncertainty</h1>
 <h4 class="author">Cory Whitney</h4>
-<h4 class="date">December 02, 2025</h4>
+<h4 class="date">December 03, 2025</h4>
 
 </div>
 
@@ -2997,8 +2997,9 @@ in decisions. We identify, define, and evaluate research by extracting
 the decision-supporting methods, describing them and their approach to
 supporting decisions. We present a protocol-driven comprehensive review
 and synthesis of the various methods applied for decision support. We
-offer an overview of where these methods are currently applied and some
-interpretation about where these applications can be expanded.</p>
+offer an overview of where these methods have been applied. We also
+offer an interpretation about where these applications can be
+expanded.</p>
 </div>
 <div id="review-and-synthesis" class="section level1">
 <h1>Review and Synthesis</h1>
@@ -3104,13 +3105,8 @@ files into a single new bib file.</p>
 <code>dplyr</code> and the <code>purrr</code> function
 <code>map_dfr</code> <span class="citation">Wickham and Henry
 (2025)</span>.</p>
-<pre class="r"><code># Read and combine all files with type standardization
-
-  data &lt;- qs::qread(final_qs_file)
-  data$source_file &lt;- basename(final_qs_file)  # Track which file it came from
-  
-  # Standardize column types to prevent binding errors
-  combined_bib_data &lt;- data %&gt;%
+<pre class="r"><code>  # Standardize column types to prevent binding errors
+  combined_bib_data &lt;- bib_data %&gt;%
     dplyr::mutate(
       # Convert YEAR to character first, then to numeric (handles NAs)
       YEAR = as.character(YEAR),
@@ -3120,14 +3116,14 @@ files into a single new bib file.</p>
       ANNOTE = as.character(ANNOTE),
       BIBTEXKEY = as.character(BIBTEXKEY)
     )</code></pre>
-<p>Our BibTeX contains 7522 citations and 48 reference information items
-for each.</p>
+<p>Our BibTeX contains 72106 citations and 2376 reference information
+items for each.</p>
 </div>
 <div id="bibtex-cleaning" class="section level3">
 <h3>BibTeX Cleaning</h3>
 <p>We prepare the BibTeX file using <code>dplyr</code> <span class="citation">(Wickham et al. 2023)</span>, for annotation tracking
 and text consolidation.</p>
-<p>35 of the citations have annotations.</p>
+<p>461 of the citations have text to work with.</p>
 </div>
 </div>
 <div id="run-prisma-pipeline" class="section level2">
@@ -3137,17 +3133,16 @@ and text consolidation.</p>
 and base R duplicate detection <span class="citation">(R Core Team
 2025)</span> to find both title-based and DOI-based duplicates through
 text normalization and exact matching.</p>
-<p>A total of 100 duplicates were removed.</p>
+<p>361 duplicates were removed.</p>
 <p>Apply manual classifications from bib keywords using
 <code>apply_manual_classifications</code>, with <code>dplyr</code> <span class="citation">(Wickham et al. 2023)</span> and <code>stringr</code>
 <span class="citation">(Wickham 2025)</span> to identify papers that we
 manually marked ‘bin’ for exclusion or ‘read’ for inclusion.</p>
-<p>A total of 2 records were removed manually.</p>
+<p>359 records were removed manually.</p>
 <p>Apply additional exclusion rules. Remove all annual reports,
 syllabus, magazines, course notes, legal documents, bibliography
 collections etc.</p>
-<p>Additional exclusion rules removed 0 records. Altogether our list of
-papers has shrunken from 461 to 359</p>
+<p>Additional exclusion rules removed 359 records.</p>
 <p>Create <code>clean_bib_data_prisma</code> with all classified
 data.</p>
 <pre class="r"><code>clean_bib_data_prisma &lt;- excluded_irrelevant</code></pre>

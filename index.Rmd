@@ -303,6 +303,9 @@ clean_bib_data_methods <- clean_bib_data_prisma %>%
     detected_methods = map_chr(full_text, detect_methods),
     methods_from_title = map_chr(TITLE, detect_methods)
   )
+
+# Export a table of papers in each category with bib citation and text related (use the old text extraction process that was lost in the last push)
+# Also add the year to this file so we can talk about the 'evolution of the field' - A sankey per decade (50s, 60s etc.)
 ```
 
 After cleaning `r sum((clean_bib_data_methods$detected_methods != "")==TRUE)` papers had some methods detected.
@@ -437,6 +440,7 @@ method_counts <- clean_bib_data_confidence %>%
 
 # Take top 10 method categories for clarity
 top_methods <- method_counts %>%
+  # CW Check this again ######
   head(10)  # Adjust number as needed
 
 # Prepare data

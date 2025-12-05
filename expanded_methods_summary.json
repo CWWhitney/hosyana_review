@@ -1,0 +1,103 @@
+{
+  "total_papers": 12625,
+  "papers_with_methods": 8813,
+  "percentage_with_methods": 69.80594059405941,
+  "method_statistics": {
+    "DECISION_ANALYSIS": {
+      "count": 1496,
+      "percentage": 11.84950495049505
+    },
+    "POLICY_INTERVENTION": {
+      "count": 842,
+      "percentage": 6.66930693069307
+    },
+    "UNCERTAINTY_ANALYSIS": {
+      "count": 665,
+      "percentage": 5.267326732673268
+    },
+    "STAKEHOLDER_EXPERT": {
+      "count": 368,
+      "percentage": 2.914851485148515
+    },
+    "MODELING_SIMULATION": {
+      "count": 475,
+      "percentage": 3.762376237623762
+    },
+    "BAYESIAN_PROBABILISTIC": {
+      "count": 1381,
+      "percentage": 10.93861386138614
+    },
+    "COMPUTER_ASSISTED": {
+      "count": 1995,
+      "percentage": 15.801980198019802
+    },
+    "VALUE_INFORMATION": {
+      "count": 1032,
+      "percentage": 8.174257425742574
+    },
+    "MULTI_CRITERIA": {
+      "count": 240,
+      "percentage": 1.900990099009901
+    },
+    "OPTIMIZATION": {
+      "count": 597,
+      "percentage": 4.7287128712871285
+    },
+    "ECONOMIC_EVALUATION": {
+      "count": 933,
+      "percentage": 7.39009900990099
+    },
+    "GAME_THEORY": {
+      "count": 405,
+      "percentage": 3.207920792079208
+    },
+    "BEHAVIORAL_PSYCHOLOGY": {
+      "count": 568,
+      "percentage": 4.499009900990099
+    },
+    "SYSTEMS_COMPLEXITY": {
+      "count": 1438,
+      "percentage": 11.390099009900991
+    },
+    "TECHNOLOGY_INNOVATION": {
+      "count": 991,
+      "percentage": 7.849504950495049
+    },
+    "ENVIRONMENTAL_SUSTAINABILITY": {
+      "count": 819,
+      "percentage": 6.487128712871288
+    },
+    "QUALITY_PERFORMANCE": {
+      "count": 265,
+      "percentage": 2.099009900990099
+    },
+    "RISK_SAFETY": {
+      "count": 650,
+      "percentage": 5.148514851485149
+    },
+    "FORECASTING_PREDICTION": {
+      "count": 746,
+      "percentage": 5.908910891089109
+    },
+    "EVALUATION_ASSESSMENT": {
+      "count": 3522,
+      "percentage": 27.8970297029703
+    }
+  },
+  "year_distribution": {
+    "2000s": 3015,
+    "2010s": 6070,
+    "2020s": 2732,
+    "1980s": 260,
+    "1960s": 19,
+    "1970s": 80,
+    "1910s": 1,
+    "1990s": 285,
+    "1900s": 1,
+    "1950s": 3
+  },
+  "high_confidence_papers": 9,
+  "multi_method_papers": 2710,
+  "average_confidence": 0.03804942574257426,
+  "average_uncertainty_statements": 1.1302970297029702
+}

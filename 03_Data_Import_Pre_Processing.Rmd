@@ -39,6 +39,8 @@ Although `bibtex` `read.bib` and `write.bib` functions [@R-bibtex] have done muc
 
 ```{r create_qs_collection, echo=FALSE}
 # Use data structures from the start
+# run fresh populate bib/bib_raw/ with zotero exports
+# delete "bib/Bib_clean.bib" and "qs/Bib_valid_only.qs"
 if (!file.exists("qs/Bib_valid_only.qs")) {
   clean_bib_files("bib/bib_raw/", "bib/Bib_clean.bib")
   bib_data <- bib2df::bib2df("bib/Bib_clean.bib")
@@ -46,20 +48,14 @@ if (!file.exists("qs/Bib_valid_only.qs")) {
 } else {
   bib_data <- qs::qread("qs/Bib_valid_only.qs")
 }
-
-final_qs_file <- "qs/Bib_valid_only.qs"
 ```
 
-Organize all bib data into an accessible dataset with `dplyr` and the `purrr` function `map_dfr` [@R-dplyr, @R-purrr]. 
+Organize all bib data into an accessible dataset with `dplyr` and the `purrr` function `map_dfr` [@R-dplyr, @R-purrr].
 
 ```{r combined_bib_data_qs}
-# Read and combine all files with type standardization
 
-  data <- qs::qread(final_qs_file)
-  data$source_file <- basename(final_qs_file)  # Track which file it came from
-  
   # Standardize column types to prevent binding errors
-  combined_bib_data <- data %>%
+  combined_bib_data <- bib_data %>%
     dplyr::mutate(
       # Convert YEAR to character first, then to numeric (handles NAs)
       YEAR = as.character(YEAR),
@@ -69,7 +65,6 @@ Organize all bib data into an accessible dataset with `dplyr` and the `purrr` fu
       ANNOTE = as.character(ANNOTE),
       BIBTEXKEY = as.character(BIBTEXKEY)
     )
-
 ```
 
 Our BibTeX contains `r nrow(combined_bib_data)` citations and `r ncol(combined_bib_data)` reference information items for each.
@@ -89,7 +84,7 @@ clean_bib_data <- combined_bib_data %>%
   )
 ```
 
-`r sum(clean_bib_data$has_annotation)` of the citations have annotations.
+`r length(clean_bib_data$full_text)` of the citations have text to work with.
 
 ## Run PRISMA Pipeline
 
@@ -122,7 +117,7 @@ identify_duplicates <- function(bib_data) {
   duplicates_removed <- duplicates_summary %>% filter(duplicate_status == "unique")
 ```
 
-A total of `r sum(nrow(clean_bib_data) - nrow(duplicates_removed))` duplicates were removed. 
+`r nrow(duplicates_removed)` duplicates were removed. 
 
 Apply manual classifications from bib keywords using `apply_manual_classifications`, with `dplyr` [@R-dplyr] and `stringr` [@R-stringr] to identify papers that we manually marked 'bin' for exclusion or 'read' for inclusion.
 
@@ -154,7 +149,7 @@ apply_manual_classifications <- function(bib_data) {
 
 ```
 
-A total of `r nrow(duplicates_removed) - nrow(removed_manually)` records were removed manually. 
+`r nrow(removed_manually)` records were removed manually. 
 
 Apply additional exclusion rules. Remove all annual reports, syllabus, magazines, course notes, legal documents, bibliography collections etc.
 
@@ -210,7 +205,7 @@ apply_exclusion_rules <- function(bib_data) {
     filter(!(manual_decision == "unreviewed" & automated_exclude))
 ```
 
-Additional exclusion rules removed `r nrow(removed_manually) - nrow(excluded_irrelevant)` records. Altogether our list of papers has shrunken from `r nrow(clean_bib_data)` to `r nrow(excluded_irrelevant)`
+Additional exclusion rules removed `r nrow(excluded_irrelevant)` records.
 
 Create `clean_bib_data_prisma` with all classified data. 
 

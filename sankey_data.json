@@ -1,0 +1,124 @@
+{
+  "2000s": {
+    "total_papers": 2615,
+    "methods": {
+      "Probabilistic Methods": 152,
+      "Expert Systems and AI": 32,
+      "Decision Trees and Networks": 56,
+      "Behavioral Decision Theory": 11,
+      "Optimization Methods": 18,
+      "Delphi and Expert Judgment": 13,
+      "Game Theory": 6,
+      "Bayesian Methods": 147,
+      "Multi-Criteria Decision Analysis": 15,
+      "Real Options": 13,
+      "Utility and Value Theory": 14,
+      "Robust Decision Making": 3,
+      "Fuzzy Methods": 3
+    }
+  },
+  "2010s": {
+    "total_papers": 5432,
+    "methods": {
+      "Bayesian Methods": 440,
+      "Probabilistic Methods": 463,
+      "Optimization Methods": 116,
+      "Multi-Criteria Decision Analysis": 85,
+      "Decision Trees and Networks": 126,
+      "Fuzzy Methods": 24,
+      "Real Options": 17,
+      "Expert Systems and AI": 93,
+      "Behavioral Decision Theory": 36,
+      "Game Theory": 20,
+      "Utility and Value Theory": 22,
+      "Robust Decision Making": 18,
+      "Delphi and Expert Judgment": 46
+    }
+  },
+  "2020s": {
+    "total_papers": 2685,
+    "methods": {
+      "Expert Systems and AI": 127,
+      "Bayesian Methods": 152,
+      "Decision Trees and Networks": 64,
+      "Optimization Methods": 65,
+      "Probabilistic Methods": 186,
+      "Multi-Criteria Decision Analysis": 51,
+      "Behavioral Decision Theory": 32,
+      "Delphi and Expert Judgment": 22,
+      "Fuzzy Methods": 17,
+      "Game Theory": 12,
+      "Real Options": 7,
+      "Utility and Value Theory": 7,
+      "Robust Decision Making": 5
+    }
+  },
+  "1980s": {
+    "total_papers": 251,
+    "methods": {
+      "Bayesian Methods": 13,
+      "Optimization Methods": 2,
+      "Game Theory": 2,
+      "Behavioral Decision Theory": 6,
+      "Probabilistic Methods": 15,
+      "Decision Trees and Networks": 16,
+      "Expert Systems and AI": 10,
+      "Delphi and Expert Judgment": 6,
+      "Utility and Value Theory": 4,
+      "Multi-Criteria Decision Analysis": 3
+    }
+  },
+  "1960s": {
+    "total_papers": 19,
+    "methods": {
+      "Bayesian Methods": 2,
+      "Decision Trees and Networks": 1,
+      "Optimization Methods": 1,
+      "Probabilistic Methods": 1,
+      "Game Theory": 1,
+      "Delphi and Expert Judgment": 1
+    }
+  },
+  "1970s": {
+    "total_papers": 78,
+    "methods": {
+      "Probabilistic Methods": 8,
+      "Game Theory": 1,
+      "Utility and Value Theory": 1,
+      "Bayesian Methods": 2,
+      "Decision Trees and Networks": 4,
+      "Multi-Criteria Decision Analysis": 1
+    }
+  },
+  "1910s": {
+    "total_papers": 1,
+    "methods": {}
+  },
+  "1990s": {
+    "total_papers": 281,
+    "methods": {
+      "Delphi and Expert Judgment": 7,
+      "Probabilistic Methods": 42,
+      "Bayesian Methods": 28,
+      "Decision Trees and Networks": 17,
+      "Real Options": 4,
+      "Expert Systems and AI": 11,
+      "Game Theory": 3,
+      "Utility and Value Theory": 4,
+      "Optimization Methods": 4,
+      "Behavioral Decision Theory": 6,
+      "Multi-Criteria Decision Analysis": 1
+    }
+  },
+  "1900s": {
+    "total_papers": 1,
+    "methods": {}
+  },
+  "1950s": {
+    "total_papers": 3,
+    "methods": {
+      "Probabilistic Methods": 1,
+      "Optimization Methods": 2
+    }
+  }
+}

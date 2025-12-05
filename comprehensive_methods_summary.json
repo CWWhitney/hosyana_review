@@ -1,0 +1,74 @@
+{
+  "total_papers": 12625,
+  "papers_with_methods": 2826,
+  "percentage_with_methods": 22.384158415841586,
+  "method_statistics": {
+    "PROBABILISTIC": {
+      "count": 1191,
+      "percentage": 9.433663366336633
+    },
+    "BAYESIAN": {
+      "count": 797,
+      "percentage": 6.312871287128713
+    },
+    "MCDA": {
+      "count": 226,
+      "percentage": 1.79009900990099
+    },
+    "UTILITY_VALUE": {
+      "count": 69,
+      "percentage": 0.5465346534653465
+    },
+    "DECISION_TREES": {
+      "count": 292,
+      "percentage": 2.3128712871287127
+    },
+    "GAME_THEORY": {
+      "count": 101,
+      "percentage": 0.8
+    },
+    "FUZZY": {
+      "count": 46,
+      "percentage": 0.3643564356435644
+    },
+    "ROBUST": {
+      "count": 63,
+      "percentage": 0.499009900990099
+    },
+    "EXPERT_AI": {
+      "count": 385,
+      "percentage": 3.0495049504950495
+    },
+    "BEHAVIORAL": {
+      "count": 102,
+      "percentage": 0.807920792079208
+    },
+    "REAL_OPTIONS": {
+      "count": 55,
+      "percentage": 0.4356435643564357
+    },
+    "DELPHI_EXPERT": {
+      "count": 225,
+      "percentage": 1.782178217821782
+    },
+    "OPTIMIZATION": {
+      "count": 361,
+      "percentage": 2.8594059405940597
+    }
+  },
+  "year_distribution": {
+    "2000s": 3015,
+    "2010s": 6070,
+    "2020s": 2732,
+    "1980s": 260,
+    "1960s": 19,
+    "1970s": 80,
+    "1910s": 1,
+    "1990s": 285,
+    "1900s": 1,
+    "1950s": 3
+  },
+  "high_confidence_papers": 0,
+  "average_confidence": 0.010879207920792078,
+  "average_uncertainty_statements": 0.34835643564356433
+}
