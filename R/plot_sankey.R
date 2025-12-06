@@ -131,7 +131,7 @@ plot_sankey <- function(inputs, losses, unit, labels, format = "plot") {
   lines(c(0.1, 0, 0.05, 0, 0.4), c(0, 0, frInputs[1] / 2, frInputs[1], frInputs[1]), lwd = w)
 
   # First input label
-  inputLabel <- paste(labels[1], ": ", inputs[1], " ", unit, " (", round(100 * frInputs[1], digits = 1), "%)", sep = "")
+  inputLabel <- paste(labels[1], ": ", inputs[1], " ", unit, sep = "")
   fontsize <- 0.8
   text(0, frInputs[1] / 2, inputLabel, cex = fontsize, pos = 2) # try pos=4
 
@@ -176,7 +176,7 @@ plot_sankey <- function(inputs, losses, unit, labels, format = "plot") {
       phiText <- pi / 2 - 2 * min(0.05, 0.8 * abs(frInputs[j])) / (rI + rE)
       xText <- posBot - (rE + rI) * sin(phiText) / 3
       yText <- limBot - rE / 1.5 + (rE + rI) * cos(phiText) / 2
-      fullLabel <- paste(labels[j], ": ", inputs[j], " ", unit, " (", round(100 * frInputs[j], digits = 1), "%)", sep = "")
+      fullLabel <- paste(labels[j], ": ", inputs[j], " ", unit, sep = "")
       # line171 - consistent font size for input labels
       fontsize <- 0.8
       text(xText, yText, fullLabel, cex = fontsize, pos = 2)
@@ -230,7 +230,7 @@ plot_sankey <- function(inputs, losses, unit, labels, format = "plot") {
     # Draw label
     txtX <- posTop + rI + frLosses[i] / 2
     txtY <- limTop + rI + arTop + 0.05
-    fullLabel <- paste(labels[i + length(inputs)], ": ", losses[i], " ", unit, " (", round(100 * frLosses[i], digits = 1), "%)", sep = "")
+    fullLabel <- paste(labels[i + length(inputs)], ": ", losses[i], " ", unit, sep = "")
     fontsize <- 0.8
     # text(txtX, txtY, fullLabel, cex=fontsize, pos=4, srt=35)
     # line223 - srt changes from 35 to 90 to orient labels vertically,
@@ -263,7 +263,7 @@ plot_sankey <- function(inputs, losses, unit, labels, format = "plot") {
   newPos <- newPos + 0.8 * (frLosses[length(frLosses)])
 
   # Last loss label
-  lossLabel <- paste(labels[length(labels)], ": ", losses[length(losses)], " ", unit, " (", round(100 * frLosses[length(losses)], digits = 1), "%)", sep = "")
+  lossLabel <- paste(labels[length(labels)], ": ", losses[length(losses)], " ", unit, sep = "")
   fontsize <- 0.8
   text(newPos + 0.05, limTop - frLosses[length(frLosses)] / 2, lossLabel, cex = fontsize, pos = 4) # try pos=4
 

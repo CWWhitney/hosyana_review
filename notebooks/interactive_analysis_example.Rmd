@@ -1,0 +1,331 @@
+---
+title: "Interactive R Analysis Example - Hosyana Review"
+output:
+  html_document:
+    code_folding: show
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Interactive R Analysis Example
+
+This R Markdown document demonstrates interactive line-by-line analysis of the comprehensive bibliography data. In RStudio, you can run each chunk individually by clicking the green arrow or pressing `Ctrl+Shift+Enter`, just like your usual workflow.
+
+**Usage in RStudio:**
+- Click on a line and press `Ctrl+Enter` to run that line
+- Run entire chunks with `Ctrl+Shift+Enter`
+- Variables persist between chunks
+- Results display immediately in the console or inline
+
+## Setup and Data Loading
+
+```{r libraries}
+# Load required libraries (run this chunk first)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyr)
+library(stringr)
+library(DT)
+library(plotly)
+library(knitr)
+library(kableExtra)
+
+cat("✓ Libraries loaded successfully\n")
+```
+
+```{r load_data}
+# Load the comprehensive data
+df <- read_csv('FINAL_methods_analysis.csv', show_col_types = FALSE)
+cat("Loaded", nrow(df), "papers\n")
+cat("Columns:", paste(names(df)[1:10], collapse = ", "), "...\n")
+```
+
+```{r data_preview}
+# Quick data overview
+head(df, 3) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+## Interactive Data Exploration
+
+```{r data_quality}
+# Check data quality - run this line to see missing data
+missing_data <- df %>%
+  summarise_all(~sum(is.na(.))) %>%
+  pivot_longer(everything(), names_to = "column", values_to = "missing") %>%
+  filter(missing > 0) %>%
+  arrange(desc(missing))
+
+if(nrow(missing_data) > 0) {
+  cat("Missing data by column:\n")
+  print(missing_data)
+} else {
+  cat("No missing data found!\n")
+}
+```
+
+```{r year_distribution}
+# Year distribution - run this to see publication years
+year_counts <- df %>% count(YEAR, sort = TRUE)
+cat("Year range:", min(df$YEAR, na.rm = TRUE), "-", max(df$YEAR, na.rm = TRUE), "\n")
+cat("Most productive year:", year_counts$YEAR[1], "with", year_counts$n[1], "papers\n")
+```
+
+```{r method_detection}
+# Method detection summary - run this line by line to explore
+papers_with_methods <- df %>% filter(HAS_METHODS == 1)
+detection_rate <- nrow(papers_with_methods) / nrow(df) * 100
+
+cat("Papers with methods detected:", nrow(papers_with_methods), "\n")
+cat("Detection rate:", round(detection_rate, 1), "%\n")
+```
+
+## Method Analysis (Interactive)
+
+```{r method_columns}
+# Get method columns
+method_columns <- c(
+  'DECISION_ANALYSIS', 'POLICY_INTERVENTION', 'UNCERTAINTY_ANALYSIS',
+  'STAKEHOLDER_EXPERT', 'MODELING_SIMULATION', 'BAYESIAN_PROBABILISTIC',
+  'COMPUTER_ASSISTED', 'VALUE_INFORMATION', 'MULTI_CRITERIA', 'OPTIMIZATION',
+  'ECONOMIC_EVALUATION', 'GAME_THEORY', 'BEHAVIORAL_PSYCHOLOGY',
+  'SYSTEMS_COMPLEXITY', 'TECHNOLOGY_INNOVATION', 'ENVIRONMENTAL_SUSTAINABILITY',
+  'QUALITY_PERFORMANCE', 'RISK_SAFETY', 'FORECASTING_PREDICTION', 'EVALUATION_ASSESSMENT'
+)
+
+cat("Found", length(method_columns), "method categories\n")
+```
+
+```{r method_popularity}
+# Calculate method popularity (run this to see top methods)
+method_counts <- df %>%
+  select(all_of(method_columns)) %>%
+  summarise_all(sum) %>%
+  pivot_longer(everything(), names_to = "method", values_to = "count") %>%
+  arrange(desc(count)) %>%
+  mutate(clean_name = str_replace_all(method, "_", " ") %>% str_to_title())
+
+cat("Top 10 methods:\n")
+for(i in 1:10) {
+  cat("  ", method_counts$clean_name[i], ":", method_counts$count[i], "papers\n")
+}
+```
+
+```{r method_visualization}
+# Quick visualization of top methods
+top_methods_plot <- method_counts %>%
+  head(8) %>%
+  ggplot(aes(x = reorder(clean_name, count), y = count)) +
+  geom_col(fill = "steelblue", alpha = 0.7) +
+  coord_flip() +
+  labs(title = "Top 8 Decision Support Methods",
+       x = "Method",
+       y = "Number of Papers") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+print(top_methods_plot)
+```
+
+## Temporal Analysis (Decade Trends)
+
+```{r decade_analysis}
+# Create decade column
+df <- df %>%
+  mutate(
+    decade = floor(YEAR / 10) * 10,
+    decade = ifelse(is.na(decade), 2020, decade)  # Handle missing years
+  )
+
+# Look at decade distribution
+decade_counts <- df %>%
+  count(decade, sort = FALSE) %>%
+  filter(!is.na(decade))
+
+cat("Papers by decade:\n")
+for(i in 1:nrow(decade_counts)) {
+  cat("  ", decade_counts$decade[i], "s:", decade_counts$n[i], "papers\n")
+}
+```
+
+```{r specific_decade}
+# Focus on specific decade (change the decade here)
+decade_to_analyze <- 2010
+decade_data <- df %>% filter(decade == decade_to_analyze)
+
+cat("\n", decade_to_analyze, "s Analysis:\n", sep = "")
+cat("Total papers:", nrow(decade_data), "\n")
+cat("Papers with methods:", sum(decade_data$HAS_METHODS == 1), "\n")
+```
+
+```{r decade_methods}
+# Top methods for this decade
+decade_methods <- decade_data %>%
+  select(all_of(method_columns)) %>%
+  summarise_all(sum) %>%
+  pivot_longer(everything(), names_to = "method", values_to = "count") %>%
+  arrange(desc(count)) %>%
+  mutate(clean_name = str_replace_all(method, "_", " ") %>% str_to_title())
+
+cat("\nTop 5 methods in", decade_to_analyze, "s:\n")
+for(i in 1:5) {
+  cat("  ", decade_methods$clean_name[i], ":", decade_methods$count[i], "papers\n")
+}
+```
+
+## Recent Trends (2020-2024)
+
+```{r recent_analysis}
+# Focus on recent years (2020-2024)
+recent_data <- df %>% filter(YEAR >= 2020 & YEAR <= 2024)
+cat("Recent papers (2020-2024):", nrow(recent_data), "\n")
+
+# Year by year breakdown
+recent_by_year <- recent_data %>%
+  count(YEAR, sort = FALSE)
+
+cat("\nYear-by-year breakdown:\n")
+for(i in 1:nrow(recent_by_year)) {
+  cat("  ", recent_by_year$YEAR[i], ":", recent_by_year$n[i], "papers\n")
+}
+```
+
+```{r recent_methods}
+# Top methods in recent period
+recent_methods <- recent_data %>%
+  select(all_of(method_columns)) %>%
+  summarise_all(sum) %>%
+  pivot_longer(everything(), names_to = "method", values_to = "count") %>%
+  arrange(desc(count)) %>%
+  mutate(
+    clean_name = str_replace_all(method, "_", " ") %>% str_to_title(),
+    percentage = count / sum(recent_data$HAS_METHODS == 1) * 100
+  )
+
+cat("Top methods in 2020-2024:\n")
+for(i in 1:8) {
+  cat("  ", recent_methods$clean_name[i], ":", recent_methods$count[i],
+      "papers (", round(recent_methods$percentage[i], 1), "%)\n")
+}
+```
+
+## Custom Analysis (Edit and Run)
+
+```{r multi_method}
+# Example: Find papers using multiple methods
+df <- df %>%
+  rowwise() %>%
+  mutate(method_count = sum(c_across(all_of(method_columns)))) %>%
+  ungroup()
+
+multi_method <- df %>% filter(method_count > 2)
+
+cat("Papers using 3+ methods:", nrow(multi_method), "\n")
+cat("Average methods per paper:", round(mean(df$method_count), 2), "\n")
+```
+
+```{r search_titles}
+# Example: Search for specific terms in titles
+search_term <- "decision"  # Change this to search for different terms
+matching_papers <- df %>%
+  filter(str_detect(tolower(TITLE), tolower(search_term)))
+
+cat("Papers with '", search_term, "' in title:", nrow(matching_papers), "\n")
+if(nrow(matching_papers) > 0) {
+  cat("\nExample titles:\n")
+  for(i in 1:min(3, nrow(matching_papers))) {
+    cat("  -", matching_papers$TITLE[i], "\n")
+  }
+}
+```
+
+```{r trend_plot}
+# Example: Create a simple trend plot
+method_to_track <- 'DECISION_ANALYSIS'  # Change this to track different methods
+
+trend_data <- df %>%
+  filter(decade >= 1970) %>%
+  group_by(decade) %>%
+  summarise(method_count = sum(.data[[method_to_track]]), .groups = "drop")
+
+trend_plot <- trend_data %>%
+  ggplot(aes(x = decade, y = method_count)) +
+  geom_line(linewidth = 1.2, color = "steelblue") +
+  geom_point(size = 3, color = "darkblue") +
+  labs(
+    title = paste("Trend:", str_replace_all(method_to_track, "_", " ") %>% str_to_title()),
+    x = "Decade",
+    y = "Number of Papers"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+print(trend_plot)
+```
+
+## Interactive Data Table
+
+```{r interactive_table}
+# Create an interactive table of recent papers
+recent_summary <- recent_data %>%
+  filter(HAS_METHODS == 1) %>%
+  select(TITLE, YEAR, AUTHORS, JOURNAL, CONFIDENCE) %>%
+  arrange(desc(YEAR), desc(CONFIDENCE)) %>%
+  head(50)
+
+# Create interactive table
+datatable(recent_summary,
+          options = list(pageLength = 10, scrollX = TRUE),
+          caption = "Recent Papers with Detected Methods (2020-2024)")
+```
+
+## Summary Statistics
+
+```{r summary_stats}
+# Generate summary statistics
+summary_stats <- list(
+  total_papers = nrow(df),
+  papers_with_methods = sum(df$HAS_METHODS == 1),
+  detection_rate = round(sum(df$HAS_METHODS == 1) / nrow(df) * 100, 1),
+  year_range = paste(min(df$YEAR, na.rm = TRUE), "-", max(df$YEAR, na.rm = TRUE)),
+  top_method = method_counts$clean_name[1],
+  top_method_count = method_counts$count[1],
+  multi_method_papers = sum(df$method_count > 1),
+  avg_methods_per_paper = round(mean(df$method_count), 2)
+)
+
+cat("=== SUMMARY STATISTICS ===\n")
+cat("Total papers analyzed:", summary_stats$total_papers, "\n")
+cat("Papers with methods detected:", summary_stats$papers_with_methods, "\n")
+cat("Detection rate:", summary_stats$detection_rate, "%\n")
+cat("Year coverage:", summary_stats$year_range, "\n")
+cat("Top method:", summary_stats$top_method, "(", summary_stats$top_method_count, "papers)\n")
+cat("Multi-method papers:", summary_stats$multi_method_papers, "\n")
+cat("Average methods per paper:", summary_stats$avg_methods_per_paper, "\n")
+```
+
+---
+
+## How to Use This Interactive Analysis
+
+**In RStudio:**
+
+1. **Run individual lines** with `Ctrl+Enter` to see immediate results in the console
+2. **Run entire chunks** with `Ctrl+Shift+Enter` or click the green arrow
+3. **Modify variables** in chunks above (like `decade_to_analyze`, `search_term`, `method_to_track`) and re-run
+4. **Variables persist** between chunks - you can reference `df`, `method_counts`, etc. in new chunks
+5. **Create new chunks** with `Ctrl+Alt+I` to experiment with your own analysis
+
+**Key Interactive Features:**
+- All variables remain in your R environment for further analysis
+- Plots appear in the Plots pane
+- Data tables show in the Viewer pane
+- You can modify any parameters and instantly re-run to see changes
+
+This gives you the exact same interactive experience as your usual RStudio workflow!

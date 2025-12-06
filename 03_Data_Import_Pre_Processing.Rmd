@@ -13,17 +13,17 @@ Import bibliographic records using the `bib2df`, `qs` and `qs2` packages [@R-bib
 # Stream processing for large files
 clean_bib_files <- function(input_dir, output_file) {
   bib_files <- list.files(input_dir, pattern = "\\.bib$", full.names = TRUE)
-  
+
   # Process files sequentially, not all in memory
   processed_entries <- character(0)
-  
+
   for (bib_file in bib_files) {
     message("Processing: ", basename(bib_file))
-    
+
     tryCatch({
       # Use proper BibTeX parser
       parsed <- bibtex::read.bib(bib_file)
-      
+
       if (length(parsed) > 0) {
         # Write valid entries immediately
         bibtex::write.bib(parsed, file = output_file, append = TRUE)
@@ -42,9 +42,8 @@ Although `bibtex` `read.bib` and `write.bib` functions [@R-bibtex] have done muc
 # run fresh populate bib/bib_raw/ with zotero exports
 # delete "bib/Bib_clean.bib" and "qs/Bib_valid_only.qs"
 if (!file.exists("qs/Bib_valid_only.qs")) {
- # clean_bib_files("bib/bib_raw/", "bib/Bib_clean.bib")
-  # only books 1990 to 2009
- clean_bib_files("bib/bib_raw/manual_run/", "bib/Bib_clean.bib")
+  # Process ALL bib files from bib/bib_raw/ directory
+  clean_bib_files("bib/bib_raw/", "bib/Bib_clean.bib")
   bib_data <- bib2df::bib2df("bib/Bib_clean.bib")
   qs::qsave(bib_data, "qs/Bib_valid_only.qs")
 } else {
@@ -99,14 +98,14 @@ identify_duplicates <- function(bib_data) {
       # Simple title-based duplicate detection
       title_clean = str_remove_all(tolower(TITLE), "[^a-z0-9 ]"),
       is_duplicate = duplicated(title_clean) | duplicated(title_clean, fromLast = TRUE),
-      
+
       # DOI-based duplicate detection
       is_doi_duplicate = !is.na(DOI) & (duplicated(DOI) | duplicated(DOI, fromLast = TRUE)),
-      
+
       # Combined duplicate flag
       duplicate_status = case_when(
         is_doi_duplicate ~ "doi_duplicate",
-        is_duplicate ~ "title_duplicate", 
+        is_duplicate ~ "title_duplicate",
         TRUE ~ "unique"
       )
     )
@@ -114,12 +113,12 @@ identify_duplicates <- function(bib_data) {
 
  # Duplicate identification and REMOVAL
   duplicates_summary <- identify_duplicates(clean_bib_data)
-  
+
   # Remove duplicates
   duplicates_removed <- duplicates_summary %>% filter(duplicate_status == "unique")
 ```
 
-`r nrow(duplicates_removed)` duplicates were removed. 
+`r nrow(duplicates_removed)` duplicates were removed.
 
 Apply manual classifications from bib keywords using `apply_manual_classifications`, with `dplyr` [@R-dplyr] and `stringr` [@R-stringr] to identify papers that we manually marked 'bin' for exclusion or 'read' for inclusion.
 
@@ -129,13 +128,13 @@ apply_manual_classifications <- function(bib_data) {
     mutate(
       has_bin = str_detect(tolower(KEYWORDS), "\\bbin\\b"),
       has_read = str_detect(tolower(KEYWORDS), "read cw|read pka"),
-      
+
       manual_decision = case_when(
         has_bin ~ "exclude",
         has_read & !has_bin ~ "include",
         TRUE ~ "unreviewed"
       ),
-      
+
       manual_reason = case_when(
         has_bin ~ "curator_marked_bin",
         has_read ~ "manually_reviewed_keep",
@@ -151,27 +150,27 @@ apply_manual_classifications <- function(bib_data) {
 
 ```
 
-`r nrow(removed_manually)` records were removed manually. 
+`r nrow(removed_manually)` records were removed manually.
 
 Apply additional exclusion rules. Remove all annual reports, syllabus, magazines, course notes, legal documents, bibliography collections etc.
 
 ```{r apply_exclusion_rules, echo=FALSE}
 apply_exclusion_rules <- function(bib_data) {
   bib_data %>%
-    mutate( 
+    mutate(
       # Document type exclusions (specific patterns)
-      exclude_doc_type = str_detect(tolower(TITLE), 
+      exclude_doc_type = str_detect(tolower(TITLE),
                                     "annual report|syllabus|catalog|course notes|legal document|bibliography collection"),
       # Scientific content check (be more specific)
       exclude_non_scientific = case_when(
-        !is.na(JOURNAL) & str_detect(tolower(JOURNAL), 
+        !is.na(JOURNAL) & str_detect(tolower(JOURNAL),
                                      "legal review|law journal|news|magazine|newspaper") ~ TRUE,
         str_detect(tolower(TITLE), "^news:|^magazine:|^blog:|newspaper article") ~ TRUE,
         TRUE ~ FALSE
       ),
       # Preprint handling - only exclude if we're confident it's a duplicate
       exclude_preprint = case_when(
-        !is.na(JOURNAL) & str_detect(tolower(JOURNAL), "arxiv|preprint|biorxiv|medrxiv") & 
+        !is.na(JOURNAL) & str_detect(tolower(JOURNAL), "arxiv|preprint|biorxiv|medrxiv") &
           !is.na(PUBLISHER) & str_detect(tolower(PUBLISHER), "elsevier|springer|wiley|taylor") ~ TRUE,
         TRUE ~ FALSE
       ),
@@ -185,13 +184,13 @@ apply_exclusion_rules <- function(bib_data) {
         TRUE ~ FALSE
       ),
       # Combined automated exclusion
-      automated_exclude = exclude_doc_type | #exclude_language | 
+      automated_exclude = exclude_doc_type | #exclude_language |
         exclude_non_scientific | exclude_preprint | exclude_content,
       automated_reason = case_when(
         exclude_doc_type ~ "invalid_document_type",
        # exclude_language ~ "non_english",
         exclude_non_scientific ~ "non_scientific",
-        exclude_preprint ~ "preprint_with_published_version", 
+        exclude_preprint ~ "preprint_with_published_version",
         exclude_content ~ "irrelevant_content",
         TRUE ~ "not_excluded"
       )
@@ -201,15 +200,15 @@ apply_exclusion_rules <- function(bib_data) {
 
   # Automated exclusion rules and REMOVAL
   excluded_bib <- apply_exclusion_rules(removed_manually)
-  
+
   # Remove automated exclusions (only from unreviewed records)
-  excluded_irrelevant <- excluded_bib %>% 
+  excluded_irrelevant <- excluded_bib %>%
     filter(!(manual_decision == "unreviewed" & automated_exclude))
 ```
 
 Additional exclusion rules removed `r nrow(excluded_irrelevant)` records.
 
-Create `clean_bib_data_prisma` with all classified data. 
+Create `clean_bib_data_prisma` with all classified data.
 
 ```{r clean_bib_data_prisma_excluded_irrelevant}
 clean_bib_data_prisma <- excluded_irrelevant

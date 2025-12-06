@@ -1,40 +1,236 @@
-# hosyana_review
+# Hosyana Review: Comprehensive Decision Support Methods Analysis
 
-A systematic review of the methods to support decisions-based analysis of decision-supporting holistic modeling methods
+A systematic analysis of decision support methods in literature using automated text mining and visualization techniques.
 
-*What is the state of the art in methods are being applied to support decisions under uncertainty (holistic systems analysis)?*
+## 🎯 Project Overview
 
-Knit everything from the index.Rmd file
+This project analyzes **12,625+ papers** from comprehensive bibliography collections to identify and categorize decision support methods across **70+ years** of research (1955-2024). It provides automated method detection, statistical analysis, and publication-ready visualizations.
 
----- Search keywords ----
+### Key Achievements
+- ✅ **Complete Coverage**: Processes ALL .bib files (33 files, 12,625+ papers)
+- ✅ **High Detection Rate**: 66.4% method detection across 20 categories
+- ✅ **Multi-Format Output**: CSV data, PDF plots, interactive HTML visualizations
+- ✅ **Publication Ready**: Clean Sankey plots with consistent formatting
 
-“decision”+(“intervention”OR”policy”)+“uncertainty”+(“expert”OR”stakeholder”)+(“model“OR”monte carlo”OR”simulation”OR”Bayesian”OR”computer assisted”)+(“value of information”OR”information accuracy”)
+## 📁 Project Structure
 
-# Protocol
+```
+hosyana_review/
+├── 📊 data/
+│   ├── analysis_results/          # CSV files with analysis results
+│   │   ├── FINAL_methods_analysis.csv           # Main Python analysis (12,625 papers)
+│   │   ├── COMPREHENSIVE_methods_classification.csv  # R-compatible format (8,380 papers)
+│   │   └── *.csv                  # Additional analysis results
+│   └── reports/                   # JSON reports and logs
+│       ├── FINAL_analysis_report.json
+│       ├── FINAL_sankey_data.json
+│       └── *.log
+├── 📈 figures/
+│   ├── sankey_plots/             # Publication-ready PDF plots
+│   │   ├── comprehensive_sankey_1970.pdf
+│   │   ├── comprehensive_sankey_1980.pdf
+│   │   ├── ...                   # One plot per decade + 2020-2024
+│   │   └── comprehensive_sankey_2024.pdf
+│   └── interactive/              # Interactive HTML visualizations
+│       ├── decade_method_sankey.html
+│       ├── method_evolution_sankey.html
+│       └── *.html
+├── 🔧 scripts/
+│   ├── python/                   # Python analysis scripts
+│   │   ├── final_comprehensive_analysis.py    # Main analysis engine
+│   │   ├── create_sankey_plots.py            # Interactive visualizations
+│   │   └── explore_results.py               # Interactive exploration
+│   └── r/                        # R visualization scripts
+│       ├── create_comprehensive_sankey.R     # PDF Sankey plots
+│       └── create_comprehensive_csv.R        # Data format conversion
+├── 📚 notebooks/                 # Interactive analysis notebooks
+│   ├── interactive_analysis_example.ipynb   # Jupyter notebook
+│   └── interactive_analysis_example.Rmd     # R Markdown notebook
+├── 📖 docs/                      # Documentation
+│   ├── COMPREHENSIVE_ANALYSIS_SUMMARY.md
+│   └── *.md                      # Additional documentation
+├── 🗂️ bib/                       # Bibliography data
+│   └── bib_raw/                  # Raw .bib files (33 files)
+├── 🛠️ R/                         # R functions
+│   └── plot_sankey.R             # Sankey plotting functions
+├── 📄 Core Files
+│   ├── index.Rmd                 # Main R Markdown report
+│   ├── index.html                # Generated HTML report
+│   ├── run_comprehensive_analysis.py  # Main Python workflow
+│   └── run_comprehensive_analysis.R   # Main R workflow
+└── 🔧 Config Files
+    ├── requirements.txt           # Python dependencies
+    └── hosyana_review.Rproj      # RStudio project
+```
 
-1. Join the Zotero collection 22_Methods-Review-decisions (super secret and only for hortibonn people; ask if you need a link)
+## 🚀 Quick Start
 
-1. Add notes and tags - using information from the pdf or the link in snapshot (usually the abstract already has enough information)
+### Prerequisites
 
-1. These notes and tags should outline either the reason for exclusion (a note proceeded by 'Bin:' i.e.
+**Python Environment:**
+```bash
+pip install -r requirements.txt
+```
 
-<img width="329" alt="Screenshot 2023-07-05 at 4 27 19 PM" src="https://github.com/CWWhitney/hosyana_review/assets/19190662/744c6402-0e01-45be-a1a0-d01a97a1243e">
+**R Environment:**
+```r
+install.packages(c("dplyr", "ggplot2", "readr", "tidyr", "stringr", "jsonlite", "rmarkdown", "knitr"))
+```
 
- - and/or - 
+### Option 1: Complete Analysis (Recommended)
 
-Tags with the relevant information about the paper including, but not limited to, field of application, method applied, and any other information and indication that let's us know why the paper is included
+Run the full workflow including Python analysis and R visualizations:
 
-<img width="288" alt="Screenshot 2023-07-05 at 4 26 19 PM" src="https://github.com/CWWhitney/hosyana_review/assets/19190662/3b167c7a-de9c-4917-a97c-d8b61eb6d867">
+```bash
+python3 run_comprehensive_analysis.py
+```
 
-Regroup and discuss next steps (here they are preliminary):
+This processes ALL .bib files and generates:
+- CSV analysis results in `data/analysis_results/`
+- PDF Sankey plots in `figures/sankey_plots/`
+- Interactive HTML visualizations in `figures/interactive/`
+- Comprehensive HTML report: `index.html`
 
-1. re-organize files and move them to new relevant folders, i.e. remove binned items to their own folder (bin), remove papers that share applications, methods etc. to shared folders for beginning the synthesis
+### Option 2: R-Only Workflow
 
-1. Divide the initial stage of synthesis into chapters (according to folders)
+If you already have Python results, run R analysis only:
 
-1. Export bib files of each folder and add to the Github collection, reference in YAML of the `index` file
+```r
+Rscript run_comprehensive_analysis.R
+```
 
-1. Write synthesis 
+### Option 3: Manual Step-by-Step
 
-Note: the repo is quite large with all the bib files so a special command is needed to get this to load to git
-`git config http.postBuffer 2000000000` (the max buffer), then use git lfs https://git-lfs.com/
+```bash
+# Step 1: Python Analysis (processes all 33 .bib files)
+python3 scripts/python/final_comprehensive_analysis.py
+
+# Step 2: Interactive Visualizations
+python3 scripts/python/create_sankey_plots.py
+
+# Step 3: R-Compatible Data
+Rscript scripts/r/create_comprehensive_csv.R
+
+# Step 4: Publication Sankey Plots
+Rscript scripts/r/create_comprehensive_sankey.R
+
+# Step 5: HTML Report
+Rscript -e "rmarkdown::render('index.Rmd')"
+```
+
+## 📊 Key Results Summary
+
+### Papers Analyzed
+- **Total Papers**: 12,625 across all .bib files
+- **Papers with Methods**: 8,380 (66.4% detection rate)
+- **Time Coverage**: 1955-2024 (70 years)
+- **Peak Decade**: 2010s with 4,130 papers
+- **Recent Trends**: 2,077 papers in 2020-2024
+
+### Top Decision Support Methods
+1. **Decision Analysis**: 1,513 papers
+2. **Computer Assisted**: 1,131 papers
+3. **Evaluation Assessment**: 787 papers
+4. **Systems Complexity**: 712 papers
+5. **Policy Intervention**: 694 papers
+6. **Bayesian Probabilistic**: 522 papers
+7. **Uncertainty Analysis**: 498 papers
+8. **Technology Innovation**: 400 papers
+
+### Method Evolution Insights
+- **1970s-1990s**: Traditional decision analysis and optimization
+- **2000s**: Computer-assisted methods and evaluation frameworks
+- **2010s+**: Complexity science, Bayesian approaches, multi-criteria analysis
+- **2020-2024**: Evaluation assessment dominance (39% of recent research)
+
+## 📈 Output Files Guide
+
+### Analysis Data
+- **`FINAL_methods_analysis.csv`**: Complete Python analysis (12,625 papers with binary method indicators)
+- **`COMPREHENSIVE_methods_classification.csv`**: R-compatible format (8,380 papers with primary methods)
+
+### Visualizations
+- **PDF Sankey Plots**: 7 publication-ready plots (1970s-2024, including 2020-2024 focus)
+- **Interactive HTML**: 4 dynamic visualizations for exploration
+
+### Reports
+- **`index.html`**: Complete integrated analysis report
+- **JSON Reports**: Statistical summaries and data for further analysis
+- **Markdown Docs**: Comprehensive analysis documentation
+
+## 🔧 Interactive Analysis
+
+### Jupyter Notebook (Python)
+```bash
+jupyter lab notebooks/interactive_analysis_example.ipynb
+```
+- Line-by-line execution (like RStudio)
+- Immediate output display
+- Rich visualizations
+
+### R Markdown (RStudio)
+Open `notebooks/interactive_analysis_example.Rmd` in RStudio
+- Familiar RStudio workflow
+- `Ctrl+Enter` line execution
+- Integrated environment
+
+## 📚 Method Categories
+
+The analysis detects 20 comprehensive method categories:
+
+**Core Decision Methods:**
+- Decision Analysis, Multi-Criteria Decision Analysis, Game Theory
+
+**Quantitative Approaches:**
+- Bayesian/Probabilistic, Optimization, Economic Evaluation
+
+**Technology & Innovation:**
+- Computer Assisted, Technology Innovation, Systems Complexity
+
+**Assessment & Evaluation:**
+- Evaluation Assessment, Quality Performance, Risk Safety
+
+**Human-Centered Methods:**
+- Stakeholder Expert, Behavioral Psychology, Uncertainty Analysis
+
+**And more...** (see full list in analysis results)
+
+## 🔍 Data Sources
+
+- **33 .bib files** in `bib/bib_raw/` directory
+- Comprehensive coverage of decision support literature
+- Multiple publication types: journal articles, books, reports, conference papers
+- Automated duplicate detection and quality filtering
+
+## 🤝 Contributing
+
+1. **Add new .bib files** to `bib/bib_raw/` directory
+2. **Run analysis** with `python3 run_comprehensive_analysis.py`
+3. **Review results** in organized output directories
+4. **Update documentation** as needed
+
+## 📄 Citation
+
+When using this analysis or methodology, please cite:
+
+```bibtex
+@misc{hosyana_review_2024,
+  title={Comprehensive Decision Support Methods Analysis: Automated Literature Review of 12,625+ Papers},
+  author={Whitney, Cory and Contributors},
+  year={2024},
+  note={Systematic analysis covering 1955-2024}
+}
+```
+
+## 📞 Support
+
+- **Documentation**: See `docs/` directory for detailed guides
+- **Interactive Help**: Use notebooks for step-by-step exploration
+- **Method Details**: Review `scripts/` for implementation specifics
+
+---
+
+**Last Updated**: December 2024  
+**Version**: 2.0 (Organized Structure)  
+**Coverage**: 12,625 papers across 70 years  
+**Status**: ✅ Complete Analysis Available
