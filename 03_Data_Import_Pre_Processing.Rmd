@@ -42,7 +42,9 @@ Although `bibtex` `read.bib` and `write.bib` functions [@R-bibtex] have done muc
 # run fresh populate bib/bib_raw/ with zotero exports
 # delete "bib/Bib_clean.bib" and "qs/Bib_valid_only.qs"
 if (!file.exists("qs/Bib_valid_only.qs")) {
-  clean_bib_files("bib/bib_raw/", "bib/Bib_clean.bib")
+ # clean_bib_files("bib/bib_raw/", "bib/Bib_clean.bib")
+  # only books 1990 to 2009
+ clean_bib_files("bib/bib_raw/manual_run/", "bib/Bib_clean.bib")
   bib_data <- bib2df::bib2df("bib/Bib_clean.bib")
   qs::qsave(bib_data, "qs/Bib_valid_only.qs")
 } else {
