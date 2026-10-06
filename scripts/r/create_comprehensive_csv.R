@@ -1,11 +1,11 @@
 #!/usr/bin/env Rscript
 # Comprehensive CSV Converter for R Workflow Compatibility
 #
-# This script converts the Python analysis results into the format expected
+# This script converts the classifier output into the format expected
 # by the R workflow, creating a comprehensive CSV with method classifications
 # that works with ALL bibliography files.
 #
-# Requirements: Run final_comprehensive_analysis.py first
+# Requirements: Run R/classify_methods.R first
 #
 # Usage: Rscript create_comprehensive_csv.R
 
@@ -17,22 +17,23 @@ suppressPackageStartupMessages({
   library(tidyr)
 })
 
-# Function to convert Python data to R workflow format
+# Function to format classification results for R workflow
 create_comprehensive_csv <- function() {
   cat("=== COMPREHENSIVE CSV CONVERTER ===\n")
-  cat("Converting Python analysis to R workflow format\n\n")
+  cat("Converting classification results to R workflow format\n\n")
 
   # Check if required file exists
-  if (!file.exists("FINAL_methods_analysis.csv")) {
-    stop("FINAL_methods_analysis.csv not found. Run final_comprehensive_analysis.py first.")
+  input_file <- "data/analysis_results/FINAL_methods_analysis.csv"
+  if (!file.exists(input_file)) {
+    stop("FINAL_methods_analysis.csv not found. Run R/classify_methods.R first.")
   }
 
   # Load the comprehensive data
   cat("Loading comprehensive analysis data...\n")
-  methods_data <- read_csv("FINAL_methods_analysis.csv", show_col_types = FALSE)
+  methods_data <- read_csv(input_file, show_col_types = FALSE)
   cat("Loaded", nrow(methods_data), "papers from comprehensive analysis\n")
 
-  # Method columns mapping (Python column -> R friendly name)
+  # Method columns mapping (category code -> R friendly name)
   method_mapping <- c(
     "DECISION_ANALYSIS" = "Decision Analysis",
     "POLICY_INTERVENTION" = "Policy Intervention",
@@ -147,7 +148,7 @@ create_comprehensive_csv <- function() {
     arrange(year, bibref)
 
   # Save the comprehensive CSV
-  output_file <- "COMPREHENSIVE_methods_classification.csv"
+  output_file <- "data/analysis_results/COMPREHENSIVE_methods_classification.csv"
   write_csv(comprehensive_csv, output_file)
 
   cat("Comprehensive CSV saved to:", output_file, "\n")
@@ -207,7 +208,7 @@ if (!interactive()) {
     error = function(e) {
       cat("Error:", e$message, "\n")
       cat("\nPlease ensure you have:\n")
-      cat("1. Run 'python3 final_comprehensive_analysis.py' first\n")
+      cat("1. Run 'Rscript R/classify_methods.R' first\n")
       cat("2. Required R packages installed (dplyr, stringr, readr, tidyr)\n")
       stop("Script execution failed")
     }

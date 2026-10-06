@@ -1,10 +1,10 @@
 #!/usr/bin/env Rscript
-# Comprehensive Sankey Plot Generator using Python Analysis Results
+# Comprehensive Sankey Plot Generator using Classifier Results
 #
 # This script creates R-style Sankey plots using the comprehensive analysis
-# from final_comprehensive_analysis.py which processes ALL bib files.
+# from R/classify_methods.R which processes ALL bib files.
 #
-# Requirements: Run final_comprehensive_analysis.py first to generate data files
+# Requirements: Run R/classify_methods.R first to generate data files
 #
 # Usage: Rscript create_comprehensive_sankey.R
 
@@ -25,17 +25,20 @@ create_comprehensive_sankey <- function() {
   cat("Loading comprehensive analysis data...\n")
 
   # Check if required files exist
-  if (!file.exists("FINAL_methods_analysis.csv")) {
-    stop("FINAL_methods_analysis.csv not found. Run final_comprehensive_analysis.py first.")
+  csv_file <- "data/analysis_results/FINAL_methods_analysis.csv"
+  json_file <- "data/reports/FINAL_sankey_data.json"
+
+  if (!file.exists(csv_file)) {
+    stop("FINAL_methods_analysis.csv not found. Run R/classify_methods.R first.")
   }
 
-  if (!file.exists("FINAL_sankey_data.json")) {
-    stop("FINAL_sankey_data.json not found. Run final_comprehensive_analysis.py first.")
+  if (!file.exists(json_file)) {
+    stop("FINAL_sankey_data.json not found. Run R/classify_methods.R first.")
   }
 
   # Load the comprehensive data
-  methods_data <- read.csv("FINAL_methods_analysis.csv", stringsAsFactors = FALSE)
-  sankey_data <- fromJSON("FINAL_sankey_data.json")
+  methods_data <- read.csv(csv_file, stringsAsFactors = FALSE)
+  sankey_data <- fromJSON(json_file)
 
   cat("Loaded", nrow(methods_data), "papers from comprehensive analysis\n")
 
@@ -107,7 +110,7 @@ create_comprehensive_sankey <- function() {
     )
 
     # Create the plot
-    pdf_name <- paste0("comprehensive_sankey_", target_decade, ".pdf")
+    pdf_name <- paste0("figures/sankey_plots/comprehensive_sankey_", target_decade, ".pdf")
 
     pdf(pdf_name, width = 12, height = 8)
     par(cex = 0.8, cex.main = 1.0, cex.lab = 0.8, cex.axis = 0.8)
@@ -165,7 +168,7 @@ create_comprehensive_sankey <- function() {
   }
 
   cat("\n=== FILES CREATED ===\n")
-  created_files <- paste0("comprehensive_sankey_", decades, ".pdf")
+  created_files <- paste0("figures/sankey_plots/comprehensive_sankey_", decades, ".pdf")
   existing_files <- created_files[file.exists(created_files)]
 
   if (length(existing_files) > 0) {
@@ -188,7 +191,7 @@ create_comprehensive_sankey <- function() {
 # Main execution
 if (!interactive()) {
   cat("=== COMPREHENSIVE SANKEY PLOT GENERATOR ===\n")
-  cat("Processing ALL bibliography files through Python analysis results\n\n")
+  cat("Processing ALL bibliography files through classification results\n\n")
 
   tryCatch(
     {
@@ -201,7 +204,7 @@ if (!interactive()) {
     error = function(e) {
       cat("Error:", e$message, "\n")
       cat("\nPlease ensure you have:\n")
-      cat("1. Run 'python3 final_comprehensive_analysis.py' first\n")
+      cat("1. Run 'Rscript R/classify_methods.R' first\n")
       cat("2. Required R packages installed (dplyr, purrr, jsonlite, stringr)\n")
       cat("3. plot_sankey.R file available in R/ directory\n")
       stop("Script execution failed")

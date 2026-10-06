@@ -18,7 +18,7 @@ This project analyzes **12,625+ papers** from comprehensive bibliography collect
 hosyana_review/
 ├── 📊 data/
 │   ├── analysis_results/          # CSV files with analysis results
-│   │   ├── FINAL_methods_analysis.csv           # Main Python analysis (12,625 papers)
+│   │   ├── FINAL_methods_analysis.csv           # Main classification output (12,625 papers)
 │   │   ├── COMPREHENSIVE_methods_classification.csv  # R-compatible format (8,380 papers)
 │   │   └── *.csv                  # Additional analysis results
 │   └── reports/                   # JSON reports and logs
@@ -36,30 +36,22 @@ hosyana_review/
 │       ├── method_evolution_sankey.html
 │       └── *.html
 ├── 🔧 scripts/
-│   ├── python/                   # Python analysis scripts
-│   │   ├── final_comprehensive_analysis.py    # Main analysis engine
-│   │   ├── create_sankey_plots.py            # Interactive visualizations
-│   │   └── explore_results.py               # Interactive exploration
 │   └── r/                        # R visualization scripts
 │       ├── create_comprehensive_sankey.R     # PDF Sankey plots
 │       └── create_comprehensive_csv.R        # Data format conversion
-├── 📚 notebooks/                 # Interactive analysis notebooks
-│   ├── interactive_analysis_example.ipynb   # Jupyter notebook
-│   └── interactive_analysis_example.Rmd     # R Markdown notebook
 ├── 📖 docs/                      # Documentation
 │   ├── COMPREHENSIVE_ANALYSIS_SUMMARY.md
 │   └── *.md                      # Additional documentation
 ├── 🗂️ bib/                       # Bibliography data
 │   └── bib_raw/                  # Raw .bib files (33 files)
 ├── 🛠️ R/                         # R functions
+│   ├── classify_methods.R        # Method classification engine
 │   └── plot_sankey.R             # Sankey plotting functions
 ├── 📄 Core Files
 │   ├── index.Rmd                 # Main R Markdown report
 │   ├── index.html                # Generated HTML report
-│   ├── run_comprehensive_analysis.py  # Main Python workflow
 │   └── run_comprehensive_analysis.R   # Main R workflow
 └── 🔧 Config Files
-    ├── requirements.txt           # Python dependencies
     └── hosyana_review.Rproj      # RStudio project
 ```
 
@@ -67,54 +59,37 @@ hosyana_review/
 
 ### Prerequisites
 
-**Python Environment:**
-```bash
-pip install -r requirements.txt
-```
-
 **R Environment:**
 ```r
-install.packages(c("dplyr", "ggplot2", "readr", "tidyr", "stringr", "jsonlite", "rmarkdown", "knitr"))
+install.packages(c("dplyr", "stringr", "purrr", "readr", "tibble", "jsonlite", "tidyr", "ggplot2", "rmarkdown", "knitr"))
 ```
 
 ### Option 1: Complete Analysis (Recommended)
 
-Run the full workflow including Python analysis and R visualizations:
-
-```bash
-python3 run_comprehensive_analysis.py
-```
-
-This processes ALL .bib files and generates:
-- CSV analysis results in `data/analysis_results/`
-- PDF Sankey plots in `figures/sankey_plots/`
-- Interactive HTML visualizations in `figures/interactive/`
-- Comprehensive HTML report: `index.html`
-
-### Option 2: R-Only Workflow
-
-If you already have Python results, run R analysis only:
+Run the full R workflow, from raw bibliography to HTML report:
 
 ```r
 Rscript run_comprehensive_analysis.R
 ```
 
-### Option 3: Manual Step-by-Step
+This processes ALL .bib files and generates:
+- CSV analysis results in `data/analysis_results/`
+- PDF Sankey plots in `figures/sankey_plots/`
+- Comprehensive HTML report: `index.html`
 
-```bash
-# Step 1: Python Analysis (processes all 33 .bib files)
-python3 scripts/python/final_comprehensive_analysis.py
+### Option 2: Manual Step-by-Step
 
-# Step 2: Interactive Visualizations
-python3 scripts/python/create_sankey_plots.py
+```r
+# Step 1: Classify methods (processes all 33 .bib files)
+Rscript R/classify_methods.R
 
-# Step 3: R-Compatible Data
+# Step 2: R-Compatible Data
 Rscript scripts/r/create_comprehensive_csv.R
 
-# Step 4: Publication Sankey Plots
+# Step 3: Publication Sankey Plots
 Rscript scripts/r/create_comprehensive_sankey.R
 
-# Step 5: HTML Report
+# Step 4: HTML Report
 Rscript -e "rmarkdown::render('index.Rmd')"
 ```
 
@@ -146,7 +121,7 @@ Rscript -e "rmarkdown::render('index.Rmd')"
 ## 📈 Output Files Guide
 
 ### Analysis Data
-- **`FINAL_methods_analysis.csv`**: Complete Python analysis (12,625 papers with binary method indicators)
+- **`FINAL_methods_analysis.csv`**: Complete classification output (12,625 papers with binary method indicators)
 - **`COMPREHENSIVE_methods_classification.csv`**: R-compatible format (8,380 papers with primary methods)
 
 ### Visualizations
@@ -158,23 +133,7 @@ Rscript -e "rmarkdown::render('index.Rmd')"
 - **JSON Reports**: Statistical summaries and data for further analysis
 - **Markdown Docs**: Comprehensive analysis documentation
 
-## 🔧 Interactive Analysis
-
-### Jupyter Notebook (Python)
-```bash
-jupyter lab notebooks/interactive_analysis_example.ipynb
-```
-- Line-by-line execution (like RStudio)
-- Immediate output display
-- Rich visualizations
-
-### R Markdown (RStudio)
-Open `notebooks/interactive_analysis_example.Rmd` in RStudio
-- Familiar RStudio workflow
-- `Ctrl+Enter` line execution
-- Integrated environment
-
-## 📚 Method Categories
+##  Method Categories
 
 The analysis detects 20 comprehensive method categories:
 
@@ -205,7 +164,7 @@ The analysis detects 20 comprehensive method categories:
 ## 🤝 Contributing
 
 1. **Add new .bib files** to `bib/bib_raw/` directory
-2. **Run analysis** with `python3 run_comprehensive_analysis.py`
+2. **Run analysis** with `Rscript run_comprehensive_analysis.R`
 3. **Review results** in organized output directories
 4. **Update documentation** as needed
 
@@ -225,8 +184,7 @@ When using this analysis or methodology, please cite:
 ## 📞 Support
 
 - **Documentation**: See `docs/` directory for detailed guides
-- **Interactive Help**: Use notebooks for step-by-step exploration
-- **Method Details**: Review `scripts/` for implementation specifics
+- **Method Details**: Review `R/classify_methods.R` and `scripts/` for implementation specifics
 
 ---
 

@@ -95,22 +95,25 @@ main <- function() {
     }
   }
 
-  # Check if Python analysis results exist
-  python_results <- "data/analysis_results/FINAL_methods_analysis.csv"
-  if (!file.exists(python_results)) {
-    cat("❌ Error: Python analysis results not found:", python_results, "\n")
-    cat("Please run the Python analysis first:\n")
-    cat("   python3 run_comprehensive_analysis.py\n")
+  start_time <- Sys.time()
+
+  # Step 1: Classify methods from the raw bibliography
+  print_step(1, "Method Classification")
+  success <- run_r_script(
+    "R/classify_methods.R",
+    "Classifying papers into decision-support method categories"
+  )
+
+  if (!success) {
+    cat("❌ Failed to classify methods. Stopping workflow.\n")
     quit(status = 1)
   }
 
-  start_time <- Sys.time()
-
-  # Step 1: Generate R-compatible CSV
-  print_step(1, "R-Compatible Data Generation")
+  # Step 2: Generate R-compatible CSV
+  print_step(2, "R-Compatible Data Generation")
   success <- run_r_script(
     "scripts/r/create_comprehensive_csv.R",
-    "Converting Python results to R-compatible format"
+    "Converting classification results to R-compatible format"
   )
 
   if (!success) {
@@ -118,8 +121,8 @@ main <- function() {
     quit(status = 1)
   }
 
-  # Step 2: Generate R-style Sankey plots
-  print_step(2, "Publication-Ready Sankey Plots")
+  # Step 3: Generate R-style Sankey plots
+  print_step(3, "Publication-Ready Sankey Plots")
   success <- run_r_script(
     "scripts/r/create_comprehensive_sankey.R",
     "Creating publication-ready PDF Sankey plots"
@@ -129,8 +132,8 @@ main <- function() {
     cat("⚠️  Warning: R Sankey plots failed, continuing...\n")
   }
 
-  # Step 3: Generate comprehensive R Markdown report
-  print_step(3, "HTML Report Generation")
+  # Step 4: Generate comprehensive R Markdown report
+  print_step(4, "HTML Report Generation")
   tryCatch(
     {
       cat("Rendering index.Rmd to HTML...\n")
@@ -149,7 +152,7 @@ main <- function() {
   cat("\n📊 Analysis Results:\n")
   check_file_exists(
     "data/analysis_results/FINAL_methods_analysis.csv",
-    "Python analysis CSV"
+    "Method classification CSV"
   )
   check_file_exists(
     "data/analysis_results/COMPREHENSIVE_methods_classification.csv",
@@ -207,12 +210,11 @@ main <- function() {
   }
 
   cat("\n🎉 R ANALYSIS WORKFLOW COMPLETED SUCCESSFULLY!\n")
-  cat("\nR-specific outputs:\n")
+  cat("\nOutputs:\n")
+  cat("  • Method classification: data/analysis_results/FINAL_methods_analysis.csv\n")
   cat("  • R-compatible data: data/analysis_results/COMPREHENSIVE_methods_classification.csv\n")
   cat("  • Publication plots: figures/sankey_plots/comprehensive_sankey_*.pdf\n")
   cat("  • HTML report: index.html\n")
-  cat("\nFor complete workflow including Python analysis, run:\n")
-  cat("  python3 run_comprehensive_analysis.py\n")
 }
 
 # Execute main function if script is run directly
