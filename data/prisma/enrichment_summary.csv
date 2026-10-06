@@ -1,0 +1,19 @@
+item,n
+included records,11151
+crossref: doi_not_in_crossref,267
+crossref: no_doi,3287
+crossref: title_mismatch,85
+crossref: title_unusable,5
+crossref: verified,7507
+abstract: crossref_doi,154
+abstract: openalex_doi,3213
+abstract: openalex_title_match,1678
+abstract: original,1994
+abstract: still missing,4112
+doi: crossref_title_match,1
+doi: openalex_title_match,1117
+doi: original,6589
+doi: reviewed_accept,109
+doi: reviewed_accept_title_year_only,48
+doi: none,3287
+weak matches in review file,747

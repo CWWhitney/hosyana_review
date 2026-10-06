@@ -1,0 +1,21 @@
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+11166 included; 9172 no abstract; 4577 no DOI
+A: 0 DOIs, 0 requests
+B: 3471 OpenAlex title searches
+B: OpenAlex budget gone, stopping
+C: 3840 Crossref title searches
+C: skipped
+Error: unexpected ',' in:
+"  s <- cache[[paste0("Q:", recs$id[i])]]
+  if (!is.list(s)) query.bibliographic = paste(r$title, r$surname),"
+Execution halted

@@ -1,0 +1,94 @@
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+Reading 33 files ...
+# A tibble: 16 × 4
+   stage          item                                                         n
+   <chr>          <chr>                                                    <dbl>
+ 1 identification Google Scholar (reported, April-July 2023)               17600
+ 2 identification Web of Science (reported)                                   14
+ 3 identification CABI (reported)                                             13
+ 4 library        Records in Zotero exports (bib/bib_raw/*.bib)            12625
+ 5 dedup          Removed: same citekey (exported twice)                    1100
+ 6 dedup          Removed: same DOI                                            7
+ 7 dedup          Removed: same title + year                                  53
+ 8 dedup          Removed: same work, other year/version (checked by hand)    15
+ 9 screening      Removed: manual 'bin' tag                                  257
+10 screening      Removed: auto rule, invalid document type                    6
+11 screening      Removed: auto rule, non-scientific                          36
+12 screening      Removed: auto rule, preprint with published version          0
+13 screening      Removed: auto rule, irrelevant content                       0
+14 included       Included (manual 'read' tag)                                89
+15 included       Included (not manually reviewed)                         11062
+16 included       TOTAL included                                           11151
+   source                                     
+   <chr>                                      
+ 1 search_results/Systematic_Review-Sankey.csv
+ 2 search_results/Systematic_Review-Sankey.csv
+ 3 02_Review.Rmd                              
+ 4 this script                                
+ 5 this script                                
+ 6 this script                                
+ 7 this script                                
+ 8 duplicates_reviewed.csv                    
+ 9 this script                                
+10 this script                                
+11 this script                                
+12 this script                                
+13 this script                                
+14 this script                                
+15 this script                                
+16 this script                                
+# A tibble: 6 × 2
+  item                                  n
+  <chr>                             <int>
+1 included                          11151
+2 with abstract                      1994
+3 with DOI                           6589
+4 with year                         11151
+5 linter error flag                   337
+6 both bin and read tags (bin wins)   215
+# A tibble: 33 × 3
+   source_file          included removed
+   <chr>                   <int>   <int>
+ 1 books_2000_2002.bib       170       0
+ 2 books_2003_2005.bib        77       0
+ 3 books_2006_2009.bib       383       2
+ 4 books_2010_2012.bib       349       3
+ 5 books_2013_2015.bib       237       5
+ 6 books_2016_2018.bib       192       4
+ 7 books_2019_2020.bib       122       7
+ 8 books_2021_2024.bib       103       1
+ 9 books_pre1990.bib          58       7
+10 chapters_no_file.bib      203       3
+11 documents.bib               0    1067
+12 papers_1990_2000.bib      253       7
+13 papers_2001_2002.bib      253       5
+14 papers_2003_5.bib         253      20
+15 papers_2007.bib           392       2
+16 papers_2009.bib           486       6
+17 papers_2010.bib           274       0
+18 papers_2011_12.bib        640      12
+19 papers_2013_14.bib        572       6
+20 papers_2015.bib           454       5
+21 papers_2016.bib           471       5
+22 papers_2017.bib           441       5
+23 papers_2018.bib           206       0
+24 papers_2019.bib           494       4
+25 papers_2020.bib           538       6
+26 papers_2021.bib           556       6
+27 papers_2022.bib           560       7
+28 papers_2023.bib           502       5
+29 papers_2024.bib            70       1
+30 papers_low_info.bib       180     162
+31 papers_pre1990.bib        192      16
+32 reports.bib              1458      92
+33 software.bib               12       3

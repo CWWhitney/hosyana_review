@@ -1,0 +1,16 @@
+remove_key,keep_key,remove_id,keep_id,remove_year,keep_year,reason,title
+huninkDecisionMakingHealth2014a,huninkDecisionMakingHealth2014b,1089,1090,2014,2014,same book twice,Decision Making in Health and Medicine: Integrating Evidence and Values
+brophyFinancePerspectiveEntrepreneurship2002,brophyFinancePerspectiveEntrepreneurship1992,3285,3024,2002,1992,wrong year; same work,A Finance Perspective on Entrepreneurship Research
+doremusDataGapsNatural2008,doremusDataGapsNatural2006,4298,3887,2008,2006,working paper vs article,Data Gaps in Natural Resource Management: Sniffing for Leaks along the Information Pipeline
+heeksImpactAssessmentICTfordevelopment2009,heeksCompendiumImpactAssessment2009,4366,11658,2009,2009,"same work, other title form",Impact Assessment of ICT-for-development Projects: A Compendium of Approaches
+fischhoffRiskPerceptionCommunication2011,fischhoffRiskPerceptionCommunication1993,5133,3065,2011,1993,wrong year; same work,Risk Perception and Communication
+talebiStochasticOnlineShortest2013,talebiStochasticOnlineShortest2018,6095,7723,2013,2018,preprint vs published,Stochastic Online Shortest Path Routing: The Value of Feedback
+haeusslerDynamicBayesianMarkov2016,haeusslerDynamicBayesianMarkov2018,6800,7625,2016,2018,preprint vs published,A Dynamic Bayesian Markov Model for Health Economic Evaluations of Interventions against Infectious Diseases
+grassMachineLearningApproach2021,grassMachineLearningApproach2023,8985,10105,2021,2023,preprint vs published,A Machine Learning Approach to Deal with Ambiguity in the Humanitarian Decision Making
+mascioCovid19InformationCrisis2021,dimascioCovid19InformationCrisis2021,9123,8924,2021,2021,garbled author; same work,Covid-19 and the Information Crisis of Liberal Democracies: Insights from Action against Disinformation in Italy and the Eu
+sinclair-desgagneNonRelianceAlgorithmsA2022,sinclair-desgagneNonRelianceAlgorithms2024,9822,10492,2022,2024,preprint vs published,On the (Non-) Reliance on Algorithms-a Decision-Theoretic Account
+bardhiLocalEvidenceDiversity2021,bardhiLocalEvidenceDiversity2023,10541,9968,2021,2023,preprint vs published,Local Evidence and Diversity in Minipublics
+yildirimCaptureTheoryCommittees2016,name-correaCaptureTheoryCommittees2018,10838,7679,2016,2018,preprint vs published,A Capture Theory of Committees
+attacksBayesBugsBioterrorists2005,thompsonBayesBugsBioterrorists2005,11144,238,2005,2005,garbled author; same work,"Bayes, Bugs, and Bioterrorists"
+unobservedIntegratingExpertKnowledge2016,constantinouIntegratingExpertKnowledge2016a,12512,6740,2016,2016,garbled title/author; same work,Integrating Expert Knowledge with Data in Bayesian
+boehmSoftwareEngineeringEconomics2007,boehmSoftwareEngineeringEconomics2002,3827,23,2007,2002,"same work, book vs article",Software Engineering Economics

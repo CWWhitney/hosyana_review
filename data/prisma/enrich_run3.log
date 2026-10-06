@@ -1,0 +1,51 @@
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+11166 included; 9172 no abstract; 4577 no DOI
+A: 0 DOIs, 0 requests
+B: 2471 OpenAlex title searches
+B: key 1 used up, switching to key 2
+B: all OpenAlex keys used up, stopping
+C: 3434 Crossref title searches
+C: skipped
+D: 711 Crossref DOI checks
+Waiting 2s for retry backoff ■■■■■■■■■■■■■■■                 
+Waiting 2s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  
+Waiting 2s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+Waiting 2s for retry backoff ■■■■■■■■■■■■■■■                 
+Waiting 2s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+# A tibble: 16 × 2
+   item                               n
+   <chr>                          <int>
+ 1 included records               11166
+ 2 crossref: doi_not_in_crossref    239
+ 3 crossref: no_doi                3527
+ 4 crossref: title_mismatch          84
+ 5 crossref: title_unusable           5
+ 6 crossref: verified              7311
+ 7 abstract: crossref_doi           140
+ 8 abstract: openalex_doi          3213
+ 9 abstract: openalex_title_match  1474
+10 abstract: original              1994
+11 abstract: still missing         4345
+12 doi: crossref_title_match          1
+13 doi: openalex_title_match       1049
+14 doi: original                   6589
+15 doi: none                       3527
+16 weak matches in review file      681
+# A tibble: 5 × 6
+  type         doi_not_in_crossref no_doi title_mismatch title_unusable verified
+  <chr>                      <int>  <int>          <int>          <int>    <int>
+1 article                      178   1822             72              5     6795
+2 book                          27   1338              7              0      320
+3 incollection                   5     94              4              0      101
+4 misc                           4     86              0              0       17
+5 techreport                    25    187              1              0       78

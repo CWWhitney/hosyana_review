@@ -1,0 +1,47 @@
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+11166 included; 9172 no abstract; 4577 no DOI
+A: 0 DOIs, 0 requests
+B: 4470 OpenAlex title searches
+B: OpenAlex budget gone, stopping
+C: 4155 Crossref title searches
+C: skipped
+D: 310 Crossref DOI checks
+Waiting 2s for retry backoff ■■■■■■■■■■■■■■■                 
+Waiting 2s for retry backoff ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 
+# A tibble: 16 × 2
+   item                               n
+   <chr>                          <int>
+ 1 included records               11166
+ 2 crossref: doi_not_in_crossref     92
+ 3 crossref: no_doi                4249
+ 4 crossref: title_mismatch          83
+ 5 crossref: title_unusable           5
+ 6 crossref: verified              6737
+ 7 abstract: crossref_doi           122
+ 8 abstract: openalex_doi          3213
+ 9 abstract: openalex_title_match   355
+10 abstract: original              1994
+11 abstract: still missing         5482
+12 doi: crossref_title_match          1
+13 doi: openalex_title_match        327
+14 doi: original                   6589
+15 doi: none                       4249
+16 weak matches in review file      163
+# A tibble: 5 × 6
+  type         doi_not_in_crossref no_doi title_mismatch title_unusable verified
+  <chr>                      <int>  <int>          <int>          <int>    <int>
+1 article                       80   2175             72              5     6540
+2 book                           8   1514              6              0      164
+3 incollection                   0    188              4              0       12
+4 misc                           1    103              0              0        3
+5 techreport                     3    269              1              0       18

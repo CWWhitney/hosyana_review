@@ -1,0 +1,24 @@
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+weak matches: 747 | unique records: 743 
+# A tibble: 9 × 2
+  decision                            n
+  <chr>                           <int>
+1 reject_no_doi                     265
+2 reject_author_different           179
+3 accept                            109
+4 human_year_gap_edition             87
+5 accept_title_year_only             48
+6 human_candidate_has_no_authors     36
+7 human_same_doi_for_two_records     13
+8 human_other                         4
+9 human_possible_duplicate_record     2

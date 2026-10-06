@@ -1,0 +1,17 @@
+stage,item,n,source
+identification,"Google Scholar (reported, April-July 2023)",17600,search_results/Systematic_Review-Sankey.csv
+identification,Web of Science (reported),14,search_results/Systematic_Review-Sankey.csv
+identification,CABI (reported),13,02_Review.Rmd
+library,Records in Zotero exports (bib/bib_raw/*.bib),12625,this script
+dedup,Removed: same citekey (exported twice),1100,this script
+dedup,Removed: same DOI,7,this script
+dedup,Removed: same title + year,53,this script
+dedup,"Removed: same work, other year/version (checked by hand)",15,duplicates_reviewed.csv
+screening,Removed: manual 'bin' tag,257,this script
+screening,"Removed: auto rule, invalid document type",6,this script
+screening,"Removed: auto rule, non-scientific",36,this script
+screening,"Removed: auto rule, preprint with published version",0,this script
+screening,"Removed: auto rule, irrelevant content",0,this script
+included,Included (manual 'read' tag),89,this script
+included,Included (not manually reviewed),11062,this script
+included,TOTAL included,11151,this script

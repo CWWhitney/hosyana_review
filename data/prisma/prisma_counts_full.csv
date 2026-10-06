@@ -1,0 +1,36 @@
+stage,item,n,source
+identification,"Google Scholar (reported, April-July 2023)",17600,search_results/Systematic_Review-Sankey.csv
+identification,Web of Science (reported),14,search_results/Systematic_Review-Sankey.csv
+identification,CABI (reported),13,02_Review.Rmd
+library,Records in Zotero exports (bib/bib_raw/*.bib),12625,this script
+dedup,Removed: same citekey (exported twice),1100,this script
+dedup,Removed: same DOI,7,this script
+dedup,Removed: same title + year,53,this script
+dedup,"Removed: same work, other year/version (checked by hand)",15,duplicates_reviewed.csv
+screening,Removed: manual 'bin' tag,257,this script
+screening,"Removed: auto rule, invalid document type",6,this script
+screening,"Removed: auto rule, non-scientific",36,this script
+screening,"Removed: auto rule, preprint with published version",0,this script
+screening,"Removed: auto rule, irrelevant content",0,this script
+included,Included (manual 'read' tag),89,this script
+included,Included (not manually reviewed),11062,this script
+included,TOTAL included,11151,this script
+verification,Included records checked against Crossref,11151,records_enriched.csv
+verification,"Verified (DOI in Crossref, title matches)",7507,records_enriched.csv
+verification,Not verified: DOI points to a different work,85,records_enriched.csv
+verification,Not verified: DOI not in Crossref,267,records_enriched.csv
+verification,Not verified: our title missing,5,records_enriched.csv
+verification,Not verified: no DOI found,3287,records_enriched.csv
+enrichment,DOI: already in Zotero,6589,records_enriched.csv
+enrichment,"DOI: added by title match (OpenAlex or Crossref, incl. reviewed)",1275,records_enriched.csv
+enrichment,DOI: total,7864,records_enriched.csv
+enrichment,Abstract: already in Zotero,1994,records_enriched.csv
+enrichment,Abstract: added (OpenAlex or Crossref),5045,records_enriched.csv
+enrichment,Abstract: total,7039,records_enriched.csv
+enrichment,Abstract: still missing,4112,records_enriched.csv
+weak_match,Weak DOI matches reviewed (unique records),743,records_enriched.csv
+weak_match,"Accepted by rule (title + author + year match), DOI added",157,records_enriched.csv
+weak_match,Rejected: no DOI on candidate,265,records_enriched.csv
+weak_match,Rejected: different authors (other work),179,records_enriched.csv
+weak_match,Left for human check,142,records_enriched.csv
+weak_match,  of the accepted: verified in Crossref,140,records_enriched.csv
