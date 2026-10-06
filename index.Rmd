@@ -58,7 +58,7 @@ suppressPackageStartupMessages({
 })
 
 # Generate bibliography for packages
-packages_to_cite <- c("knitr", "dplyr", "ggplot2", "bib2df")
+packages_to_cite <- c("knitr", "dplyr", "ggplot2", "bib2df", "bibtex", "DT", "purrr", "stringr")
 knitr::write_bib(packages_to_cite, "bib/packages.bib")
 ```
 
