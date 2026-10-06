@@ -2,219 +2,84 @@
 
 ### Bibliographic Data
 
-Import bibliographic records using the `bib2df` package [@R-bib2df], converting our BibTeX file into a structured data frame for systematic processing.
+All numbers in this section are counted by scripts, not typed. The scripts run in this order (see `README.md`):
 
-```{r read_bib_data, echo=FALSE}
+1. `R/prisma_pipeline.R` reads the Zotero exports (`bib/bib_raw/*.bib`), removes duplicates and applies the manual and automatic screening.
+2. `R/enrich_records.R` fills missing abstracts and DOIs (OpenAlex, Crossref) and checks every DOI against Crossref.
+3. `R/review_weak_matches.R` applies rules to the weak DOI matches.
+4. `R/prisma_counts_final.R` writes the final counts that are shown here.
 
-# Work on Zotero in Lintner (prepare and pre-process)
-# Export properly from Zotero using Better BibTeX plugin
-# Or configure Zotero's BibTeX export settings
+```{r load_prisma, echo=FALSE}
+# Read the outputs of the pipeline. Nothing is recomputed in this report.
+prisma_files <- c("data/prisma/prisma_counts_full.csv",
+                  "data/prisma/records_enriched.csv",
+                  "data/prisma/records_full.rds")
 
-# Stream processing for large files
-clean_bib_files <- function(input_dir, output_file) {
-  # start from an empty output file: write.bib(append = TRUE) would otherwise add every entry twice
-  if (file.exists(output_file)) file.remove(output_file)
-
-  bib_files <- list.files(input_dir, pattern = "\\.bib$", full.names = TRUE)
-
-  # Process files sequentially, not all in memory
-  processed_entries <- character(0)
-
-  for (bib_file in bib_files) {
-    message("Processing: ", basename(bib_file))
-
-    tryCatch({
-      # Use proper BibTeX parser
-      parsed <- bibtex::read.bib(bib_file)
-
-      if (length(parsed) > 0) {
-        # Write valid entries immediately
-        bibtex::write.bib(parsed, file = output_file, append = TRUE)
-      }
-    }, error = function(e) {
-      warning("Failed to process ", bib_file, ": ", e$message)
-    })
-  }
+# stop with a clear message if the pipeline has not been run
+missing_files <- prisma_files[!file.exists(prisma_files)]
+if (length(missing_files) > 0) {
+  stop("Run the pipeline first (see README.md). Missing: ", paste(missing_files, collapse = ", "))
 }
-```
 
-Although `bibtex` `read.bib` and `write.bib` functions [@R-bibtex] have done much of the work of removing irrelevant work, we still do some post-processisng to esure that we have a meaningful collection of papers to proceed. We combine all bib files into a single new bib file.
+prisma   <- readr::read_csv("data/prisma/prisma_counts_full.csv", show_col_types = FALSE)
+enriched <- readr::read_csv("data/prisma/records_enriched.csv",   show_col_types = FALSE)
+full     <- readRDS("data/prisma/records_full.rds")
 
-```{r create_bib_cache, echo=FALSE}
-# Use data structures from the start
-# run fresh populate bib/bib_raw/ with zotero exports
-# delete "bib/Bib_clean.bib" and "cache/Bib_valid_only.rds" to start fresh
-# (cache is a plain R file: saveRDS / readRDS, no extra package needed)
-dir.create("cache", showWarnings = FALSE)
-if (!file.exists("cache/Bib_valid_only.rds")) {
-  # Process ALL bib files from bib/bib_raw/ directory
-  clean_bib_files("bib/bib_raw/", "bib/Bib_clean.bib")
-  bib_data <- bib2df::bib2df("bib/Bib_clean.bib")
-  saveRDS(bib_data, "cache/Bib_valid_only.rds")
-} else {
-  bib_data <- readRDS("cache/Bib_valid_only.rds")
-}
-```
+# helpers: n of the row whose item starts with a text; number with thousand marks
+pn <- function(start) prisma$n[startsWith(prisma$item, start)][1]
+fm <- function(x) format(x, big.mark = ",")
 
-Organize all bib data into an accessible dataset with `dplyr` and the `purrr` function `map_dfr` [@R-dplyr, @R-purrr].
+# some abstracts hold control characters / Unicode non-characters that break tolower();
+# replace them with a space
+clean_txt <- function(x) stringi::stri_replace_all_regex(x, "[\\p{C}]", " ")
 
-```{r combined_bib_data_qs}
-
-  # Standardize column types to prevent binding errors
-  combined_bib_data <- bib_data %>%
-    dplyr::mutate(
-      # Convert YEAR to character first, then to numeric (handles NAs)
-      YEAR = as.character(YEAR),
-      YEAR = as.numeric(YEAR),
-      # Ensure other common columns are consistent
-      TITLE = as.character(TITLE),
-      ANNOTE = as.character(ANNOTE),
-      BIBTEXKEY = as.character(BIBTEXKEY)
-    )
-```
-
-Our BibTeX contains `r nrow(combined_bib_data)` citations and `r ncol(combined_bib_data)` reference information items for each.
-
-### BibTeX Cleaning
-
-We prepare the BibTeX file using `dplyr` [@R-dplyr], for annotation tracking and text consolidation.
-
-```{r clean_bib_data, echo=FALSE}
-# Basic cleaning and text preparation
-clean_bib_data <- combined_bib_data %>%
-  dplyr::mutate(
-    has_annotation = !is.na(ANNOTE) & ANNOTE != "",
-    annotation_text = ifelse(has_annotation, ANNOTE, ""),
-    full_text = paste(TITLE, ANNOTE, sep = " "),
-    year = as.numeric(YEAR)
+# one table of included records, with the column names the analysis below expects
+bib_data <- enriched %>%
+  dplyr::left_join(dplyr::select(full, id, keywords), by = "id") %>%
+  dplyr::transmute(
+    BIBTEXKEY = key,
+    TITLE     = clean_txt(title),
+    AUTHOR    = clean_txt(author),
+    YEAR      = as.numeric(year),
+    JOURNAL   = journal,
+    DOI       = doi_final,
+    ABSTRACT  = clean_txt(abstract_final),
+    KEYWORDS  = clean_txt(keywords),
+    CROSSREF  = crossref_status
   )
 ```
 
-`r length(clean_bib_data$full_text)` of the citations have text to work with.
+Our Zotero export holds `r fm(pn("Records in Zotero"))` records. After duplicate removal and screening, `r fm(pn("TOTAL included"))` records are included.
 
-## Run PRISMA Pipeline
-
-Detect duplicates with `identify_duplicates`, using `dplyr` [@R-dplyr] and base R duplicate detection [@R-base] to find both title-based and DOI-based duplicates through text normalization and exact matching.
-
-```{r identify_duplicates, echo=FALSE}
-identify_duplicates <- function(bib_data) {
-  bib_data %>%
-    mutate(
-      # Simple title-based duplicate detection
-      title_clean = str_remove_all(tolower(TITLE), "[^a-z0-9 ]"),
-      is_duplicate = duplicated(title_clean) | duplicated(title_clean, fromLast = TRUE),
-
-      # DOI-based duplicate detection
-      is_doi_duplicate = !is.na(DOI) & (duplicated(DOI) | duplicated(DOI, fromLast = TRUE)),
-
-      # Combined duplicate flag
-      duplicate_status = case_when(
-        is_doi_duplicate ~ "doi_duplicate",
-        is_duplicate ~ "title_duplicate",
-        TRUE ~ "unique"
-      )
-    )
-}
-
- # Duplicate identification and REMOVAL
-  duplicates_summary <- identify_duplicates(clean_bib_data)
-
-  # Remove duplicates
-  duplicates_removed <- duplicates_summary %>% filter(duplicate_status == "unique")
+```{r prisma_flow, echo=FALSE, fig.width=9, fig.height=7, fig.cap="PRISMA flow, counted by R/prisma_pipeline.R"}
+source("R/plot_prisma.R")
+plot_prisma(prisma)
 ```
 
-`r nrow(duplicates_removed)` duplicates were removed.
+#### Duplicates
 
-Apply manual classifications from bib keywords using `apply_manual_classifications`, with `dplyr` [@R-dplyr] and `stringr` [@R-stringr] to identify papers that we manually marked 'bin' for exclusion or 'read' for inclusion.
+We removed `r fm(sum(prisma$n[prisma$stage == "dedup"]))` records in four steps. We keep one copy of each work and remove only the extra copies.
 
-```{r apply_manual_classifications, echo=FALSE}
-apply_manual_classifications <- function(bib_data) {
-  bib_data %>%
-    mutate(
-      has_bin = str_detect(tolower(KEYWORDS), "\\bbin\\b"),
-      has_read = str_detect(tolower(KEYWORDS), "read cw|read pka"),
+- Same Zotero citekey, exported twice (mostly the same records in `documents.bib` and `reports.bib`): `r fm(pn("Removed: same citekey"))`.
+- Same DOI: `r pn("Removed: same DOI")`.
+- Same title and year: `r pn("Removed: same title")`.
+- Same work with a different year or version (preprint and published article, wrong year, garbled author), checked by hand: `r pn("Removed: same work")` (`data/prisma/duplicates_reviewed.csv`).
 
-      manual_decision = case_when(
-        has_bin ~ "exclude",
-        has_read & !has_bin ~ "include",
-        TRUE ~ "unreviewed"
-      ),
+#### Screening
 
-      manual_reason = case_when(
-        has_bin ~ "curator_marked_bin",
-        has_read ~ "manually_reviewed_keep",
-        TRUE ~ "not_reviewed"
-      )
-    )
-}
+We removed `r pn("Removed: manual")` records marked `bin` in Zotero, and `r sum(prisma$n[startsWith(prisma$item, "Removed: auto")])` records by automatic rules (annual reports, syllabi, catalogues, non-scientific sources). Only `r pn("Included (manual")` of the included records were marked `read` by hand; the rest have not been screened for relevance yet.
 
-# Manual classifications and REMOVAL
-  manual_classification_summary <- apply_manual_classifications(duplicates_removed)
-  # Remove manually excluded records
-  removed_manually <- manual_classification_summary %>% filter(manual_decision != "exclude")
+#### Crossref check, abstracts and DOIs
 
-```
+We checked every DOI against Crossref (title and year must match). `r fm(pn("Verified"))` of the `r fm(pn("Included records checked"))` included records are verified. `r fm(pn("Not verified: no DOI"))` have no DOI, so they cannot be checked.
 
-`r nrow(removed_manually)` records were removed manually.
+Abstracts: `r fm(pn("Abstract: total"))` of the included records have one (`r fm(pn("Abstract: already"))` came from Zotero, `r fm(pn("Abstract: added"))` were added from OpenAlex and Crossref).
 
-Apply additional exclusion rules. Remove all annual reports, syllabus, magazines, course notes, legal documents, bibliography collections etc.
-
-```{r apply_exclusion_rules, echo=FALSE}
-apply_exclusion_rules <- function(bib_data) {
-  bib_data %>%
-    mutate(
-      # Document type exclusions (specific patterns)
-      exclude_doc_type = str_detect(tolower(TITLE),
-                                    "annual report|syllabus|catalog|course notes|legal document|bibliography collection"),
-      # Scientific content check (be more specific)
-      exclude_non_scientific = case_when(
-        !is.na(JOURNAL) & str_detect(tolower(JOURNAL),
-                                     "legal review|law journal|news|magazine|newspaper") ~ TRUE,
-        str_detect(tolower(TITLE), "^news:|^magazine:|^blog:|newspaper article") ~ TRUE,
-        TRUE ~ FALSE
-      ),
-      # Preprint handling - only exclude if we're confident it's a duplicate
-      exclude_preprint = case_when(
-        !is.na(JOURNAL) & str_detect(tolower(JOURNAL), "arxiv|preprint|biorxiv|medrxiv") &
-          !is.na(PUBLISHER) & str_detect(tolower(PUBLISHER), "elsevier|springer|wiley|taylor") ~ TRUE,
-        TRUE ~ FALSE
-      ),
-      # Content relevance - be more inclusive, focus on clear exclusions
-      exclude_content = case_when(
-        # Only exclude if clearly not decision-related
-        str_detect(tolower(TITLE), "chemistry experiment|physics lab|pure mathematics|organic synthesis") ~ TRUE,
-        # Keep anything that might be decision-related
-        str_detect(tolower(TITLE), "decision|choice|select|evaluate|assess|analyze|model|uncertain|risk") ~ FALSE,
-        # Default to include for systematic review
-        TRUE ~ FALSE
-      ),
-      # Combined automated exclusion
-      automated_exclude = exclude_doc_type | #exclude_language |
-        exclude_non_scientific | exclude_preprint | exclude_content,
-      automated_reason = case_when(
-        exclude_doc_type ~ "invalid_document_type",
-       # exclude_language ~ "non_english",
-        exclude_non_scientific ~ "non_scientific",
-        exclude_preprint ~ "preprint_with_published_version",
-        exclude_content ~ "irrelevant_content",
-        TRUE ~ "not_excluded"
-      )
-    )
-}
-
-
-  # Automated exclusion rules and REMOVAL
-  excluded_bib <- apply_exclusion_rules(removed_manually)
-
-  # Remove automated exclusions (only from unreviewed records)
-  excluded_irrelevant <- excluded_bib %>%
-    filter(!(manual_decision == "unreviewed" & automated_exclude))
-```
-
-Additional exclusion rules removed `r nrow(excluded_irrelevant)` records.
-
-Create `clean_bib_data_prisma` with all classified data.
-
-```{r clean_bib_data_prisma_excluded_irrelevant}
-clean_bib_data_prisma <- excluded_irrelevant
+```{r prisma_table, echo=FALSE}
+# the full count table
+prisma %>%
+  dplyr::select(Stage = stage, Item = item, n) %>%
+  dplyr::mutate(n = format(n, big.mark = ",")) %>%
+  knitr::kable(caption = "PRISMA counts (data/prisma/prisma_counts_full.csv)") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12)
 ```

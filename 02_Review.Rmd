@@ -87,8 +87,15 @@ return were there because they listed papers that were relevant to our
 search terms. These were sometimes already in our main collection and
 sometimes not. When they were not in our collection, we added them.
 
-The initial processing brought the total number of scientific works to
-15,202.
+```{r counts_for_02, echo=FALSE}
+# numbers come from the pipeline (data/prisma/), counted in R/prisma_pipeline.R
+.p <- readr::read_csv("data/prisma/prisma_counts_full.csv", show_col_types = FALSE)
+.n <- function(start) format(.p$n[startsWith(.p$item, start)][1], big.mark = ",")
+```
+
+The Zotero export holds `r .n("Records in Zotero")` records. After duplicate
+removal and screening, `r .n("TOTAL included")` records are included
+(details in the next section).
 
 [^02_review-1]: 17,600 results but without an asterisk for decision\*
     and model\* it yielded just 17,400 results. This is a bit counter

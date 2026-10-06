@@ -240,9 +240,9 @@ get_primary_method <- function(detected_methods_list) {
 
 ```{r load_and_process}
 # Load and process bibliographic data
-if(file.exists("cache/Bib_valid_only.rds")) {
-  message("Loading bibliographic data...")
-  bib_data <- readRDS("cache/Bib_valid_only.rds")
+if(exists("bib_data")) {
+  # bib_data is built in 03_Data_Import_Pre_Processing.Rmd from the reconciled pipeline (data/prisma/)
+  message("Using ", nrow(bib_data), " included records from data/prisma/")
 
   # Clean and prepare data
   clean_bib_data <- bib_data %>%
@@ -277,7 +277,7 @@ if(file.exists("cache/Bib_valid_only.rds")) {
   message("Method detection completed: ", sum(comprehensive_results$has_methods), " papers with methods")
 
 } else {
-  stop("Bibliographic data file not found: cache/Bib_valid_only.rds")
+  stop("bib_data not found: 03_Data_Import_Pre_Processing.Rmd must run first")
 }
 ```
 
@@ -475,7 +475,8 @@ method_distribution <- comprehensive_results %>%
   )
 
 cat("## Analysis Summary\n\n")
-cat("- **Total Papers Analyzed:** ", format(total_papers, big.mark = ","), "\n")
+cat("- **Included after screening (PRISMA):** ", format(pn("TOTAL included"), big.mark = ","), "\n")
+cat("- **Total Papers Analyzed (year 1970-2025):** ", format(total_papers, big.mark = ","), "\n")
 cat("- **Papers with Methods:** ", format(papers_with_methods, big.mark = ","),
     " (", detection_rate, "%)\n")
 cat("- **Method Categories:** ", length(method_categories), "\n")
