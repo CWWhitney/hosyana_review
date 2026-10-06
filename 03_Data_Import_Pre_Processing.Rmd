@@ -2,7 +2,7 @@
 
 ### Bibliographic Data
 
-Import bibliographic records using the `bib2df`, `qs` and `qs2` packages [@R-bib2df, @R-qs, @R-qs2], converting our BibTeX file into a structured data frame for systematic processing.
+Import bibliographic records using the `bib2df` package [@R-bib2df], converting our BibTeX file into a structured data frame for systematic processing.
 
 ```{r read_bib_data, echo=FALSE}
 
@@ -12,6 +12,9 @@ Import bibliographic records using the `bib2df`, `qs` and `qs2` packages [@R-bib
 
 # Stream processing for large files
 clean_bib_files <- function(input_dir, output_file) {
+  # start from an empty output file: write.bib(append = TRUE) would otherwise add every entry twice
+  if (file.exists(output_file)) file.remove(output_file)
+
   bib_files <- list.files(input_dir, pattern = "\\.bib$", full.names = TRUE)
 
   # Process files sequentially, not all in memory
@@ -35,19 +38,21 @@ clean_bib_files <- function(input_dir, output_file) {
 }
 ```
 
-Although `bibtex` `read.bib` and `write.bib` functions [@R-bibtex] have done much of the work of removing irrelevant work, we still do some post-processisng to esure that we have a meaningful collection of papers to proceed. We combine all qs bib files into a single new bib file.
+Although `bibtex` `read.bib` and `write.bib` functions [@R-bibtex] have done much of the work of removing irrelevant work, we still do some post-processisng to esure that we have a meaningful collection of papers to proceed. We combine all bib files into a single new bib file.
 
-```{r create_qs_collection, echo=FALSE}
+```{r create_bib_cache, echo=FALSE}
 # Use data structures from the start
 # run fresh populate bib/bib_raw/ with zotero exports
-# delete "bib/Bib_clean.bib" and "qs/Bib_valid_only.qs"
-if (!file.exists("qs/Bib_valid_only.qs")) {
+# delete "bib/Bib_clean.bib" and "cache/Bib_valid_only.rds" to start fresh
+# (cache is a plain R file: saveRDS / readRDS, no extra package needed)
+dir.create("cache", showWarnings = FALSE)
+if (!file.exists("cache/Bib_valid_only.rds")) {
   # Process ALL bib files from bib/bib_raw/ directory
   clean_bib_files("bib/bib_raw/", "bib/Bib_clean.bib")
   bib_data <- bib2df::bib2df("bib/Bib_clean.bib")
-  qs::qsave(bib_data, "qs/Bib_valid_only.qs")
+  saveRDS(bib_data, "cache/Bib_valid_only.rds")
 } else {
-  bib_data <- qs::qread("qs/Bib_valid_only.qs")
+  bib_data <- readRDS("cache/Bib_valid_only.rds")
 }
 ```
 

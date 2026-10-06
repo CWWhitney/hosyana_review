@@ -41,7 +41,7 @@ options(scipen = 999)
 ```
 
 ```{r libraries, message=FALSE, warning=FALSE}
-# Load required packages
+
 suppressPackageStartupMessages({
   library(knitr)
   library(kableExtra)
@@ -55,11 +55,10 @@ suppressPackageStartupMessages({
   library(scales)
   library(bib2df)
   library(bibtex)
-  library(qs)
 })
 
 # Generate bibliography for packages
-packages_to_cite <- c("knitr", "dplyr", "ggplot2", "bib2df", "qs")
+packages_to_cite <- c("knitr", "dplyr", "ggplot2", "bib2df")
 knitr::write_bib(packages_to_cite, "bib/packages.bib")
 ```
 
@@ -241,9 +240,9 @@ get_primary_method <- function(detected_methods_list) {
 
 ```{r load_and_process}
 # Load and process bibliographic data
-if(file.exists("qs/Bib_valid_only.qs")) {
+if(file.exists("cache/Bib_valid_only.rds")) {
   message("Loading bibliographic data...")
-  bib_data <- qs::qread("qs/Bib_valid_only.qs")
+  bib_data <- readRDS("cache/Bib_valid_only.rds")
 
   # Clean and prepare data
   clean_bib_data <- bib_data %>%
@@ -278,7 +277,7 @@ if(file.exists("qs/Bib_valid_only.qs")) {
   message("Method detection completed: ", sum(comprehensive_results$has_methods), " papers with methods")
 
 } else {
-  stop("Bibliographic data file not found: qs/Bib_valid_only.qs")
+  stop("Bibliographic data file not found: cache/Bib_valid_only.rds")
 }
 ```
 
